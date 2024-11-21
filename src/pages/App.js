@@ -22,7 +22,7 @@ import { Moon, Sun } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
 // Custom components
-import { Autoplay } from "./components/carousel-autoplay.js";
+import { Autoplay } from "../components/carousel-autoplay.js";
 
 const theme = deepMerge(grommet, {
   global: {
@@ -69,6 +69,47 @@ const CardTemplate = ({ title }) => {
     </Card>
   );
 };
+
+const theatreData = [
+  {
+    name: "Cineplex VIP Cinemas University District",
+    location: "Calgary, AB",
+    distance: "1km",
+    movies: [
+      {
+        title: "The Great Gatsby",
+        rating: "PG",
+        duration: "2h 40min",
+        genre: "Musical",
+        showtimes: ["4:30 PM", "8:30 PM"],
+        image: "/images/wicked.jpg",
+      },
+      {
+        title: "Cars",
+        rating: "14A",
+        duration: "2h 28min",
+        genre: "Drama",
+        showtimes: ["5:15 PM", "6:45 PM", "9:00 PM"],
+        image: "/images/gladiator.jpg",
+      },
+    ],
+  },
+  {
+    name: "Cineplex Odeon Westhills Cinemas",
+    location: "Calgary, AB",
+    distance: "7km",
+    movies: [
+      {
+        title: "Wall-E",
+        rating: "PG",
+        duration: "1h 25min",
+        genre: "Animation, Family",
+        showtimes: ["12:50 PM"],
+        image: "/images/hitpig.jpg",
+      },
+    ],
+  },
+];
 
 function App() {
   const [dark, setDark] = useState(false);

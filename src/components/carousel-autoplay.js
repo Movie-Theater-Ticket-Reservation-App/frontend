@@ -6,7 +6,7 @@ const contentHeight = "50vh"; // Full viewport height
 
 export const Autoplay = () => (
   <Box fill="horizontal" align="center" pad="none" margin={{ bottom: "large" }}>
-    <Carousel controls={false} play={3000} fill>
+    <Carousel controls={false} play={5000} fill>
       {/* Hero Section */}
       <Box height={contentHeight} width="100%" style={{ position: "relative" }}>
         <Image

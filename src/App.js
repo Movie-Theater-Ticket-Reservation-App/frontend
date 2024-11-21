@@ -21,6 +21,9 @@ import {
 import { Moon, Sun } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
+// Custom components
+import { Autoplay } from "./components/carousel-autoplay.js";
+
 const theme = deepMerge(grommet, {
   global: {
     colors: {
@@ -72,19 +75,8 @@ function App() {
   return (
     <Grommet theme={theme} full themeMode={dark ? "dark" : "light"}>
       <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload!!!
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
       </header>
-      <Page>
+      <Page background="light-3">
         <AppBar>
           <Text size="large">My App</Text>
           <Button
@@ -107,6 +99,7 @@ function App() {
         </AppBar>
         <PageContent>
           <PageHeader title="Welcome to the movie rental app!" />
+          <Autoplay />
           <Grid columns="medium" gap="large" pad={{ bottom: "large" }}>
             <CardTemplate title="Card 1" />
             <CardTemplate title="Card 2" />

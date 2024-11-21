@@ -141,7 +141,7 @@ function App() {
         </AppBar>
         <PageContent>
           <PageHeader title="Welcome to the movie rental app!" />
-          <Autoplay />
+          <Autoplay dark={dark} />
           <Grid columns="medium" gap="large" pad={{ bottom: "large" }}>
             <CardTemplate title="Card 1" />
             <CardTemplate title="Card 2" />

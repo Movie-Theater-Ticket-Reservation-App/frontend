@@ -7,9 +7,10 @@ import { deepMerge } from "grommet/utils";
 import Landing from "./Landing"; 
 import Login from "./Login"; 
 import Profile from "./Profile";
-import Register from "./Registration";
+import Register from "./Register";
 import Tickets from "./Tickets";
 import Payments from "./Payments"; 
+import NotFound from "./404";
 
 
 // Grommet theme customization
@@ -121,11 +122,18 @@ function App() {
         <AppBar dark={dark} setDark={setDark} />
         <Routes>
           <Route path="/" element={<Landing dark={dark} />} />
+
+          {/* User routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Register />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/payments" element={<Payments />} />
+
+
+          {/* 404 Not Found */}
+          <Route path="*" element={<NotFound />} />
+
         </Routes>
       </Grommet>
     </Router>

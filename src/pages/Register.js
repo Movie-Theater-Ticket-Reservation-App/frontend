@@ -11,7 +11,7 @@ import {
   Text,
 } from "grommet";
 
-const Registration = () => {
+const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -34,9 +34,9 @@ const Registration = () => {
 
   return (
     <Page background="light-3" fill>
-      <Box fill align="center" justify="start" pad={{ top: "large" }}>
-        <Box width="medium" pad="medium" background="white" elevation="small" round="small">
-          <PageHeader title="Register" alignSelf="center" />
+      <Box fill align="center" justify="start" pad="medium">
+        <Box width="30%" pad="medium" background="white" elevation="small" round="small">
+          <PageHeader title="Register" alignSelf="left" />
           {error && (
             <Text color="status-critical" margin={{ bottom: "small" }}>
               {error}
@@ -91,4 +91,4 @@ const Registration = () => {
   );
 };
 
-export default Registration;
+export default Register;

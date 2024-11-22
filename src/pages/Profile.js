@@ -41,8 +41,8 @@ const Profile = () => {
   return (
     <Page background="light-3" fill>
       <Box fill align="center" justify="start" pad="medium">
-        <Box width="medium" pad="medium" background="white" elevation="small" round="small">
-          <PageHeader title="Profile" alignSelf="center" />
+        <Box width="30%" pad="medium" background="white" elevation="small" round="small">
+          <PageHeader title="Profile" alignSelf="left" />
           {editMode ? (
             <Form
               onSubmit={() => {

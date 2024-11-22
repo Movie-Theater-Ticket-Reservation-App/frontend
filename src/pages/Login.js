@@ -37,8 +37,8 @@ const Login = () => {
           justify="center"
           pad="medium"
         >
-          <Box width="medium" pad="medium" background="white" elevation="small" round="small">
-            <PageHeader title="Login" alignSelf="center" />
+          <Box width="36%" pad="medium" background="white" elevation="small" round="small">
+            <PageHeader title="Login" alignSelf="left" />
             {error && (
               <Text color="status-critical" margin={{ bottom: "small" }}>
                 {error}
@@ -68,7 +68,7 @@ const Login = () => {
               </Box>
             </Form>
             <Text margin={{ top: "small" }} alignSelf="center">
-              <Anchor href="/forgot-password" label="Forgot Password?" />
+              <Anchor href="/" label="Forgot Password?" />
             </Text>
           </Box>
         </Box>

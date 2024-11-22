@@ -84,13 +84,16 @@ const Landing = ({ dark }) => {
   return (
     <Page background="light-3">
       <PageContent>
-        <PageHeader title="Welcome to the movie rental app!" />
+        <PageHeader title="Welcome to the movie ticket booking app!" />
         <Autoplay dark={dark} />
         <Grid columns="medium" gap="large" pad={{ bottom: "large" }}>
           <CardTemplate title="Card 1" />
           <CardTemplate title="Card 2" />
           <CardTemplate title="Card 3" />
         </Grid>
+        <Box align = "start" pad={{ left: "1.5%" }}>        
+            <h1>Tickets</h1>
+        </Box>
         <TheatreList theatres={theatreData} />
       </PageContent>
     </Page>

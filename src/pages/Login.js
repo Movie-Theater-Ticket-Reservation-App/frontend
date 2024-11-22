@@ -29,7 +29,7 @@ const Login = () => {
   };
 
   return (
-    <Page background="light-3">
+    <Page background="light-3" fill>
       <PageContent>
         <Box
           fill

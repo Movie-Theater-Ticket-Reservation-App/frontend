@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import {
   Box,
   Button,
@@ -11,6 +12,7 @@ import {
   TableCell,
   TableHeader,
   TableRow,
+  ResponsiveContext,
 } from "grommet";
 
 const Tickets = () => {
@@ -39,46 +41,74 @@ const Tickets = () => {
     },
   ]);
 
+  const size = useContext(ResponsiveContext); // Detect screen size
+  const navigate = useNavigate(); // Hook for navigation
+
   return (
     <Page background="light-3" fill>
-      <PageContent>
-        <PageHeader title="Your Tickets" />
-        <Box pad="medium" background="white" round="small" elevation="small">
+      <Box
+        fill
+        align="center"
+        justify={size === "small" ? "center" : "start"} 
+        pad={{ top: size === "small" ? "none" : "medium", horizontal: "medium" }}
+      >
+        <Box
+          width={size === "small" ? "95%" : "70%"} 
+          pad="medium"
+          background="white"
+          round="small"
+          elevation="small"
+          overflow="auto" 
+        >
+          <PageHeader title="Your Tickets" />
           {tickets.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell scope="col" border="bottom">
-                    Movie Title
-                  </TableCell>
-                  <TableCell scope="col" border="bottom">
-                    Showtime
-                  </TableCell>
-                  <TableCell scope="col" border="bottom">
-                    Location
-                  </TableCell>
-                  <TableCell scope="col" border="bottom">
-                    Seat Number
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tickets.map((ticket) => (
-                  <TableRow key={ticket.ticketID}>
-                    <TableCell scope="row"> <strong>{ticket.movieTitle} </strong></TableCell>
-                    <TableCell>{ticket.showtime}</TableCell>
-                    <TableCell>{ticket.location}</TableCell>
-                    <TableCell><strong>{ticket.seatNumber}</strong></TableCell>
-
+            <Box overflow="auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableCell scope="col" border="bottom">
+                      Movie Title
+                    </TableCell>
+                    <TableCell scope="col" border="bottom">
+                      Showtime
+                    </TableCell>
+                    <TableCell scope="col" border="bottom">
+                      Location
+                    </TableCell>
+                    <TableCell scope="col" border="bottom">
+                      Seat
+                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {tickets.map((ticket) => (
+                    <TableRow key={ticket.ticketID}>
+                      <TableCell scope="row">
+                        <strong>{ticket.movieTitle}</strong>
+                      </TableCell>
+                      <TableCell>{ticket.showtime}</TableCell>
+                      <TableCell>{ticket.location}</TableCell>
+                      <TableCell>
+                        <strong>{ticket.seatNumber}</strong>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Box align="start" margin={{ bottom: "medium", top: "medium", left: "small" }}>
+                <Button
+                  label="Back"
+                  onClick={() => navigate(-1)} 
+                  size="small" 
+                  primary 
+                />
+              </Box>
+            </Box>
           ) : (
             <Text>No tickets found.</Text>
           )}
         </Box>
-      </PageContent>
+      </Box>
     </Page>
   );
 };

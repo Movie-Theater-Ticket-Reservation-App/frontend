@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   Box,
   Button,
@@ -9,9 +9,10 @@ import {
   PageHeader,
   TextInput,
   Text,
+  ResponsiveContext,
 } from "grommet";
 
-const Registration = () => {
+const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -20,6 +21,8 @@ const Registration = () => {
   });
 
   const [error, setError] = useState("");
+
+  const size = useContext(ResponsiveContext); // Detect screen size
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -34,9 +37,20 @@ const Registration = () => {
 
   return (
     <Page background="light-3" fill>
-      <Box fill align="center" justify="start" pad={{ top: "large" }}>
-        <Box width="medium" pad="medium" background="white" elevation="small" round="small">
-          <PageHeader title="Register" alignSelf="center" />
+      <Box
+        fill
+        align="center"
+        justify={size === "small" ? "center" : "start"} 
+        pad="medium"
+      >
+        <Box
+          width={size === "small" ? "90%" : "30%"} 
+          pad="medium"
+          background="white"
+          elevation="small"
+          round="small"
+        >
+          <PageHeader title="Register" alignSelf="start" />
           {error && (
             <Text color="status-critical" margin={{ bottom: "small" }}>
               {error}
@@ -91,4 +105,4 @@ const Registration = () => {
   );
 };
 
-export default Registration;
+export default Register;

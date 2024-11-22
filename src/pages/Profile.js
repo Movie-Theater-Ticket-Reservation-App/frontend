@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   Box,
   Button,
@@ -9,6 +9,7 @@ import {
   PageHeader,
   TextInput,
   Text,
+  ResponsiveContext,
 } from "grommet";
 
 const Profile = () => {
@@ -22,6 +23,8 @@ const Profile = () => {
 
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(user);
+
+  const size = useContext(ResponsiveContext); // Detect screen size
 
   const handleEdit = () => {
     setEditMode(true);
@@ -40,9 +43,20 @@ const Profile = () => {
 
   return (
     <Page background="light-3" fill>
-      <Box fill align="center" justify="start" pad="medium">
-        <Box width="medium" pad="medium" background="white" elevation="small" round="small">
-          <PageHeader title="Profile" alignSelf="center" />
+      <Box
+        fill
+        align="center"
+        justify={size === "small" ? "center" : "start"} 
+        pad="medium"
+      >
+        <Box
+          width={size === "small" ? "90%" : "30%"} 
+          pad="medium"
+          background="white"
+          elevation="small"
+          round="small"
+        >
+          <PageHeader title="Profile" alignSelf="start" />
           {editMode ? (
             <Form
               onSubmit={() => {
@@ -77,14 +91,12 @@ const Profile = () => {
                   }
                 />
               </FormField>
-              {/* Separate Text Components for Membership Fee and Credit Points */}
               <Box margin={{ bottom: "small" }}>
                 <Text>Membership Fee: ${formData.membershipFee.toFixed(2)}</Text>
               </Box>
               <Box margin={{ bottom: "small" }}>
                 <Text>Credit Points: {formData.creditPoints}</Text>
               </Box>
-              
               <Box
                 direction="row"
                 gap="medium"
@@ -112,10 +124,15 @@ const Profile = () => {
               <Text margin={{ bottom: "small" }}>
                 <strong>Credit Points:</strong> {user.creditPoints}
               </Text>
-              <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
+              <Box
+                direction="row"
+                gap="medium"
+                justify="center"
+                margin={{ top: "medium" }}
+              >
                 <Button label="View Tickets" href="/tickets" />
                 <Button label="Payment History" href="/payments" />
-                </Box>
+              </Box>
               <Box
                 direction="row"
                 gap="medium"

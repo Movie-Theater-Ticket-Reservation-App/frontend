@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   Box,
   Button,
@@ -10,6 +10,7 @@ import {
   Text,
   TextInput,
   Anchor,
+  ResponsiveContext,
 } from "grommet";
 import { User, Lock } from "grommet-icons";
 
@@ -17,6 +18,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const size = useContext(ResponsiveContext); // Detect screen size
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -30,15 +33,23 @@ const Login = () => {
 
   return (
     <Page background="light-3" fill>
-      <PageContent>
         <Box
           fill
           align="center"
-          justify="center"
-          pad="medium"
+          justify={size === "small" ? "center" : "start"} 
+          pad={{
+            top: size === "small" ? "1/5" : "medium",
+            horizontal: "medium",
+          }}        
         >
-          <Box width="36%" pad="medium" background="white" elevation="small" round="small">
-            <PageHeader title="Login" alignSelf="left" />
+          <Box
+            width={size === "small" ? "90%" : "36%"}
+            pad="medium"
+            background="white"
+            elevation="small"
+            round="small"
+          >
+            <PageHeader title="Login" alignSelf="start" />
             {error && (
               <Text color="status-critical" margin={{ bottom: "small" }}>
                 {error}
@@ -72,7 +83,6 @@ const Login = () => {
             </Text>
           </Box>
         </Box>
-      </PageContent>
     </Page>
   );
 };

@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import {
   Box,
+  Button,
   Page,
   PageContent,
   PageHeader,
@@ -10,6 +12,7 @@ import {
   TableCell,
   TableHeader,
   TableRow,
+  ResponsiveContext,
 } from "grommet";
 
 const Payments = () => {
@@ -35,41 +38,66 @@ const Payments = () => {
     },
   ]);
 
+  const size = useContext(ResponsiveContext); // Detect screen size
+  const navigate = useNavigate(); // Hook for navigation
+
   return (
     <Page background="light-3" fill>
-      <PageContent>
-        <PageHeader title="Your Payments" />
-        <Box pad="medium" background="white" round="small" elevation="small">
+      <Box
+        fill
+        align="center"
+        justify={size === "small" ? "center" : "start"} // Center for small screens
+        pad={{ top: size === "small" ? "none" : "medium", horizontal: "medium" }}
+      >
+        <Box
+          width={size === "small" ? "95%" : "70%"} // Adjust width dynamically
+          pad="medium"
+          background="white"
+          round="small"
+          elevation="small"
+          overflow="auto" // Enables scrolling for smaller screens
+        >
+          <PageHeader title="Your Payments" />          
           {payments.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell scope="col" border="bottom">
-                    Date
-                  </TableCell>
-                  <TableCell scope="col" border="bottom">
-                    Amount ($)
-                  </TableCell>
-                  <TableCell scope="col" border="bottom">
-                    Payment Type
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment) => (
-                  <TableRow key={payment.paymentID}>
-                    <TableCell scope="row">{payment.date}</TableCell>
-                    <TableCell>{payment.amount.toFixed(2)}</TableCell>
-                    <TableCell>{payment.paymentType}</TableCell>
+            <Box overflow="auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableCell scope="col" border="bottom">
+                      Date
+                    </TableCell>
+                    <TableCell scope="col" border="bottom">
+                      Amount ($)
+                    </TableCell>
+                    <TableCell scope="col" border="bottom">
+                      Payment Type
+                    </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.paymentID}>
+                      <TableCell scope="row">{payment.date}</TableCell>
+                      <TableCell>{payment.amount.toFixed(2)}</TableCell>
+                      <TableCell>{payment.paymentType}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <Box align="start" margin={{ bottom: "medium", top:"medium", left:"small"}}>
+            <Button
+              label="Back"
+              onClick={() => navigate(-1)} 
+              size="small" 
+              primary 
+            />
+          </Box>
+            </Box>
           ) : (
             <Text>No payments found.</Text>
           )}
         </Box>
-      </PageContent>
+      </Box>
     </Page>
   );
 };

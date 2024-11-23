@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Page,
-  PageContent,
   PageHeader,
   Text,
   Table,
@@ -16,7 +15,6 @@ import {
 } from "grommet";
 
 const Payments = () => {
-  // Mock payment data (replace this with API call if necessary)
   const [payments] = useState([
     {
       paymentID: "P001",
@@ -84,14 +82,25 @@ const Payments = () => {
                   ))}
                 </TableBody>
               </Table>
-              <Box align="start" margin={{ bottom: "medium", top:"medium", left:"small"}}>
-            <Button
-              label="Back"
-              onClick={() => navigate(-1)} 
-              size="small" 
-              primary 
-            />
-          </Box>
+              <Box
+                align="start"
+                direction="row"
+                gap="medium"
+                justify="left"
+                margin={{ bottom: "medium", top: "medium", left: "small" }}
+              >
+
+                <Button
+                  label="Back"
+                  onClick={() => navigate(-1)}
+                  primary={false}
+                />
+                <Button
+                  label="Refund"
+                  onClick={() => navigate("/refund")} // Redirect to refund page
+                  primary
+                />
+              </Box>
             </Box>
           ) : (
             <Text>No payments found.</Text>

@@ -95,13 +95,20 @@ const Tickets = () => {
                   ))}
                 </TableBody>
               </Table>
-              <Box align="start" margin={{ bottom: "medium", top: "medium", left: "small" }}>
+              <Box
+                align="start"
+                direction="row"
+                gap="medium"
+                justify="left"
+                margin={{ bottom: "medium", top: "medium", left: "small" }}
+              >
+
                 <Button
                   label="Back"
-                  onClick={() => navigate(-1)} 
-                  size="small" 
-                  primary 
+                  onClick={() => navigate(-1)}
+                  primary={false}
                 />
+                
               </Box>
             </Box>
           ) : (

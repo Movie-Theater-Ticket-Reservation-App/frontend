@@ -50,7 +50,7 @@ const Profile = () => {
         pad="medium"
       >
         <Box
-          width={size === "small" ? "90%" : "30%"} 
+          width={size === "small" ? "90%" : "36%"} 
           pad="medium"
           background="white"
           elevation="small"

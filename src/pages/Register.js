@@ -1,11 +1,11 @@
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom"; 
 import {
   Box,
   Button,
   Form,
   FormField,
   Page,
-  PageContent,
   PageHeader,
   TextInput,
   Text,
@@ -21,8 +21,8 @@ const Register = () => {
   });
 
   const [error, setError] = useState("");
-
   const size = useContext(ResponsiveContext); // Detect screen size
+  const navigate = useNavigate(); // Hook for navigation
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -32,7 +32,9 @@ const Register = () => {
     }
     setError("");
     alert(`Registered successfully with Email: ${formData.email}`);
-    // Add API call to handle user registration
+    // Add API call to handle user registration logic here if needed
+
+    navigate("/login"); // Navigate to Login page after successful registration
   };
 
   return (
@@ -40,11 +42,11 @@ const Register = () => {
       <Box
         fill
         align="center"
-        justify={size === "small" ? "center" : "start"} 
+        justify={size === "small" ? "center" : "start"}
         pad="medium"
       >
         <Box
-          width={size === "small" ? "90%" : "30%"} 
+          width={size === "small" ? "90%" : "36%"}
           pad="medium"
           background="white"
           elevation="small"

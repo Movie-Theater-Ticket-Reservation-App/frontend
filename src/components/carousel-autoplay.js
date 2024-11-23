@@ -2,10 +2,10 @@ import React from 'react';
 import { Box, Carousel, Text, Button, Image } from 'grommet';
 
 // Height for movie content
-const contentHeight = "50vh"; // Full viewport height
+const contentHeight = "60vh"; // Full viewport height
 
 export const Autoplay = ({dark}) => (
-  <Box fill="horizontal" align="center" pad="none" margin={{ bottom: "large" }}>
+  <Box fill="horizontal" align="center" pad="none" margin={{ bottom: "small" }}>
     <Carousel controls={false} play={5000} fill>
       {/* Hero Section */}
       <Box height={contentHeight} width="100%" style={{ position: "relative" }}>

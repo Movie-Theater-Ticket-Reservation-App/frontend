@@ -12,6 +12,9 @@ import Tickets from "./Tickets";
 import Payments from "./Payments"; 
 import NotFound from "./404";
 
+import ProcessPayment from "./ProcessPayment";
+import ProcessRefund from "./ProcessRefund";
+
 
 // Grommet theme customization
 const theme = deepMerge({
@@ -130,6 +133,9 @@ function App() {
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/payments" element={<Payments />} />
 
+          {/* Payment Processing */}
+          <Route path="/makepayment" element={<ProcessPayment />} />
+          <Route path="/refund" element={<ProcessRefund />} />
 
           {/* 404 Not Found */}
           <Route path="*" element={<NotFound />} />

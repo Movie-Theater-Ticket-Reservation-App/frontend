@@ -1,4 +1,6 @@
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom"; 
+
 import {
   Box,
   Button,
@@ -20,6 +22,8 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const size = useContext(ResponsiveContext); // Detect screen size
+  const navigate = useNavigate(); // Hook for navigation
+
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -29,6 +33,8 @@ const Login = () => {
     }
     setError("");
     alert(`Logged in with Email: ${email}`);
+    // Add API call to handle user login logic here if needed
+    navigate("/"); // Navigate to Home page after successful login
   };
 
   return (

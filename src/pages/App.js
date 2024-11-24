@@ -12,6 +12,7 @@ import Tickets from "./Tickets";
 import Payments from "./Payments"; 
 import Searches from "./Search";
 import Successful from "./Successful";
+import SeatBooking from "./SeatBooking";
 
 import MakePayment from "./MakePayment";
 import ProcessRefund from "./ProcessRefund";
@@ -215,6 +216,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/seat-booking/:theatreId/:movieId/:showtime" element={<SeatBooking />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/payments" element={<Payments />} />
           <Route path="/makepayment" element={<MakePayment />} />

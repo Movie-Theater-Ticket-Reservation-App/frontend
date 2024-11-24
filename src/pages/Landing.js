@@ -5,17 +5,15 @@ import {
   CardHeader,
   CardBody,
   CardFooter,
-  Grid,
-  Grommet,
   Heading,
   Page,
   PageContent,
-  PageHeader,
   Paragraph,
   ResponsiveContext,
 } from "grommet";
 import { Autoplay } from "../components/carousel-autoplay.js";
 import TheatreList from "../components/theatre-list.js";
+import { Link } from "react-router-dom";
 
 const CardTemplate = ({ title }) => {
   const size = useContext(ResponsiveContext);
@@ -82,12 +80,19 @@ const Landing = ({ dark }) => {
   ];
 
   return (
-    <Page background="light-3">
+    <Page background={dark ? "dark-1" : "light-4"}>
       <PageContent>
+        {/* Hero Carousel */}
         <Autoplay dark={dark} />
-        <Box align = "start" pad={{ left: "1.5%" }}>        
-            <h1>Tickets</h1>
+
+        {/* Tickets Section */}
+        <Box align="start" pad={{ left: "medium", top: "medium" }}>
+          <Heading level={1} size="large">
+            Tickets
+          </Heading>
         </Box>
+
+        {/* Theatre List */}
         <TheatreList theatres={theatreData} />
       </PageContent>
     </Page>

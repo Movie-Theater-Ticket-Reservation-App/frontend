@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Heading, Text, Image, Button } from "grommet";
+import { Link } from "react-router-dom";
 
 const TheatreList = ({ theatres }) => {
   return (
@@ -35,13 +36,19 @@ const TheatreList = ({ theatres }) => {
                     </Text>
                     <Box direction="row" gap="small" margin={{ top: "small" }}>
                       {movie.showtimes.map((time, timeIndex) => (
+                        <Link
+                        key={timeIndex}
+                        to={`/seat-booking/${index}/${movieIndex}/${time}`}
+                        state={{ theatre, movie, showtime: time }} // Pass correct movie and theatre data
+                        style={{ textDecoration: "none" }}
+                      >
                         <Button
-                          key={timeIndex}
                           label={time}
                           primary
                           color="brand"
                           size="small"
                         />
+                      </Link>
                       ))}
                     </Box>
                   </Box>

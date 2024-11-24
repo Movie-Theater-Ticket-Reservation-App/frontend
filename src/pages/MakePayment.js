@@ -12,17 +12,24 @@ import {
   ResponsiveContext,
 } from "grommet";
 
-const ProcessPayment = () => {
+const MakePayment = () => {
+  // Mock saved payment methods
+  const savedPaymentMethods = [
+    { id: 1, type: "Debit", owner: "John Smith", number: "****8123", expiryDate: "12/25", cvv: "123" },
+    { id: 2, type: "Credit", owner: "Jane Doe", number: "****4567", expiryDate: "05/24", cvv: "456" },
+  ];
+
   const [formData, setFormData] = useState({
+    selectedPaymentMethod: null,
     paymentType: "",
     owner: "",
     cardNumber: "",
     expiryDate: "",
     cvv: "",
-    useCreditPoints: "No", 
+    useCreditPoints: "No",
   });
 
-  const [creditPoints] = useState(300); // Mock credit points balance
+  const [creditPoints] = useState(0); // Mock credit points balance
   const [redeemPoints, setRedeemPoints] = useState(0); // Points used to redeem
   const [error, setError] = useState("");
   const size = useContext(ResponsiveContext); // Detect screen size
@@ -40,7 +47,22 @@ const ProcessPayment = () => {
       ...prevState,
       useCreditPoints: option,
     }));
-    setRedeemPoints(option === "Yes" ? Math.min(creditPoints, Math.ceil((subtotal + tax) / 0.01)) : 0); 
+    setRedeemPoints(option === "Yes" ? Math.min(creditPoints, Math.ceil((subtotal + tax) / 0.01)) : 0);
+  };
+
+  const handlePaymentMethodSelection = (option) => {
+    const selectedMethod = savedPaymentMethods.find((method) => method.id === option.id);
+    if (selectedMethod) {
+      setFormData({
+        ...formData,
+        selectedPaymentMethod: option.id,
+        paymentType: selectedMethod.type,
+        owner: selectedMethod.owner,
+        cardNumber: selectedMethod.number,
+        expiryDate: selectedMethod.expiryDate,
+        cvv: selectedMethod.cvv,
+      });
+    }
   };
 
   const handleSubmit = (event) => {
@@ -83,18 +105,38 @@ const ProcessPayment = () => {
 
           {/* Payment Form Fields */}
           <Form onSubmit={handleSubmit}>
-            <FormField label={`Use Credit Points (Available: ${creditPoints})`} name="useCreditPoints">
-              <Select
+            {savedPaymentMethods.length > 0 && (
+              <FormField label="Saved Payment Methods" name="savedPaymentMethods">
+                <Select
+                  name="savedPaymentMethods"
+                  options={savedPaymentMethods.map((method) => ({
+                    id: method.id,
+                    label: `${method.type} ${method.number}`,
+                  }))}
+                  labelKey="label"
+                  valueKey="id"
+                  value={formData.selectedPaymentMethod}
+                  onChange={({ option }) => handlePaymentMethodSelection(option)}
+                />
+              </FormField>
+            )}
+            {creditPoints > 0 && (
+              <FormField
+                label={`Use Credit Points (Available: ${creditPoints})`}
                 name="useCreditPoints"
-                options={["Yes", "No"]}
-                value={formData.useCreditPoints}
-                onChange={({ option }) => handleCreditPointSelection(option)}
-              />
-            </FormField>
+              >
+                <Select
+                  name="useCreditPoints"
+                  options={["Yes", "No"]}
+                  value={formData.useCreditPoints}
+                  onChange={({ option }) => handleCreditPointSelection(option)}
+                />
+              </FormField>
+            )}
             <FormField label="Payment Type" name="paymentType" required>
               <Select
                 name="paymentType"
-                options={["Credit Card", "Debit Card"]}
+                options={["Credit", "Debit"]}
                 value={formData.paymentType}
                 onChange={({ option }) =>
                   setFormData({ ...formData, paymentType: option })
@@ -134,7 +176,6 @@ const ProcessPayment = () => {
             <FormField label="CVV" name="cvv" required>
               <TextInput
                 name="cvv"
-                type="password"
                 placeholder="XXX"
                 value={formData.cvv}
                 onChange={(event) =>
@@ -188,4 +229,4 @@ const ProcessPayment = () => {
   );
 };
 
-export default ProcessPayment;
+export default MakePayment;

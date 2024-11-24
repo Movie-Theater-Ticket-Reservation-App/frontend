@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import { Grommet, Header, Box, Button, Text } from "grommet";
-import { Moon, Sun } from "grommet-icons";
+import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Grommet, Header, Box, Button, Text, TextInput } from "grommet";
+import { Moon, Sun, Search } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
 import Landing from "./Landing"; 
@@ -10,13 +10,14 @@ import Profile from "./Profile";
 import Register from "./Register";
 import Tickets from "./Tickets";
 import Payments from "./Payments"; 
-import NotFound from "./404";
+import Searches from "./Search";
+import Successful from "./Successful";
 
-import ProcessPayment from "./ProcessPayment";
+import MakePayment from "./MakePayment";
 import ProcessRefund from "./ProcessRefund";
 
+import NotFound from "./404";
 
-// Grommet theme customization
 const theme = deepMerge({
   global: {
     colors: {
@@ -30,9 +31,17 @@ const theme = deepMerge({
   },
 });
 
-// Central AppBar
 const AppBar = ({ dark, setDark }) => {
   const [hoveredButton, setHoveredButton] = useState(null); // Track which button is hovered
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate(); // Use the navigate hook here
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault(); // Prevent the form from reloading the page
+    if (searchQuery.trim()) {
+      navigate("/search", { state: { query: searchQuery } }); // Pass query via React Router state
+    }
+  };
 
   return (
     <Header
@@ -46,16 +55,50 @@ const AppBar = ({ dark, setDark }) => {
         </Link>
       </Text>
       <Box direction="row" gap="small" align="center">
-        
+        {/* Search Field */}
+        <form onSubmit={handleSearchSubmit} style={{ display: "flex", alignItems: "center" }}>
+          <Box
+            direction="row"
+            align="center"
+            gap="small"
+            background="white"
+            round="small"
+            pad="xsmall"
+            style={{ height: "32px", paddingLeft: "8px" }} // Thinner bar
+          >
+            <TextInput
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              plain
+              style={{
+                fontSize: "14px", // Smaller font size
+                height: "24px", // Thinner input field
+                border: "none", // Remove borders
+              }}
+            />
+            <Button
+              icon={<Search />}
+              type="submit"
+              a11yTitle="Search"
+              style={{
+                width: "24px", // Smaller button width
+                height: "24px", // Smaller button height
+                padding: "0", // Remove extra padding
+              }}
+            />
+          </Box>
+        </form>
+
         <Link to="/login" style={{ textDecoration: "none" }}>
           <Button
             label="Login"
             plain
             style={{
-              height: "42px", 
-              padding: "0", 
-              borderRadius: "4px", 
-              color: hoveredButton === "login" ? "lightblue" : "white", // Hover color effect
+              height: "42px",
+              padding: "0",
+              borderRadius: "4px",
+              color: hoveredButton === "login" ? "lightblue" : "white",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -65,16 +108,16 @@ const AppBar = ({ dark, setDark }) => {
             onMouseLeave={() => setHoveredButton(null)}
           />
         </Link>
-        
+
         <Link to="/profile" style={{ textDecoration: "none" }}>
           <Button
             label="Profile"
             plain
             style={{
-              height: "42px", 
-              padding: "0 16px", 
+              height: "42px",
+              padding: "0 16px",
               borderRadius: "4px",
-              color: hoveredButton === "profile" ? "lightblue" : "white", // Hover color effect
+              color: hoveredButton === "profile" ? "lightblue" : "white",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -90,26 +133,15 @@ const AppBar = ({ dark, setDark }) => {
           onClick={() => setDark(!dark)}
           a11yTitle={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           style={{
-            height: "42px", // Same height as the Login and Profile buttons
-            width: "42px", // Make it a square button
-            borderRadius: "50%", // Keep it circular
-            padding: "0", // Remove padding for a cleaner look
-            color: hoveredButton === "theme" ? "lightblue" : "white", // Hover color effect
+            height: "42px",
+            width: "42px",
+            borderRadius: "50%",
+            padding: "0",
+            color: hoveredButton === "theme" ? "lightblue" : "white",
             cursor: "pointer",
           }}
           onMouseEnter={() => setHoveredButton("theme")}
           onMouseLeave={() => setHoveredButton(null)}
-          tip={{
-            content: (
-              <Box
-                pad="small"
-                round="small"
-                background={dark ? "dark-1" : "light-3"}
-              >
-                {dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              </Box>
-            ),
-          }}
         />
       </Box>
     </Header>
@@ -125,21 +157,16 @@ function App() {
         <AppBar dark={dark} setDark={setDark} />
         <Routes>
           <Route path="/" element={<Landing dark={dark} />} />
-
-          {/* User routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/register" element={<Register />} />
           <Route path="/tickets" element={<Tickets />} />
           <Route path="/payments" element={<Payments />} />
-
-          {/* Payment Processing */}
-          <Route path="/makepayment" element={<ProcessPayment />} />
+          <Route path="/makepayment" element={<MakePayment />} />
           <Route path="/refund" element={<ProcessRefund />} />
-
-          {/* 404 Not Found */}
+          <Route path="/search" element={<Searches />} />
+          <Route path="/successful" element={<Successful />} />
           <Route path="*" element={<NotFound />} />
-
         </Routes>
       </Grommet>
     </Router>

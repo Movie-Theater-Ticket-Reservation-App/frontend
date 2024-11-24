@@ -13,6 +13,7 @@ import {
 } from "grommet";
 import { Autoplay } from "../components/carousel-autoplay.js";
 import TheatreList from "../components/theatre-list.js";
+import { Link } from "react-router-dom";
 
 const CardTemplate = ({ title }) => {
   const size = useContext(ResponsiveContext);

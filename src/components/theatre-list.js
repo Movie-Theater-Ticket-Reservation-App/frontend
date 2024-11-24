@@ -37,18 +37,18 @@ const TheatreList = ({ theatres }) => {
                     <Box direction="row" gap="small" margin={{ top: "small" }}>
                       {movie.showtimes.map((time, timeIndex) => (
                         <Link
-                          key={timeIndex}
-                          to={`/seat-booking/${index}/${theatre.id}/${movieIndex}/${time}`}
-                          state={{ theatre, movie, showtime: time }}
-                          style={{ textDecoration: "none" }}
-                        >
-                          <Button
-                            label={time}
-                            primary
-                            color="brand"
-                            size="small"
-                          />
-                        </Link>
+                        key={timeIndex}
+                        to={`/seat-booking/${index}/${movieIndex}/${time}`}
+                        state={{ theatre, movie, showtime: time }} // Pass correct movie and theatre data
+                        style={{ textDecoration: "none" }}
+                      >
+                        <Button
+                          label={time}
+                          primary
+                          color="brand"
+                          size="small"
+                        />
+                      </Link>
                       ))}
                     </Box>
                   </Box>

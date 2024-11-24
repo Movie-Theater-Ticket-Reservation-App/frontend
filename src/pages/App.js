@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
-import { Grommet, Header, Box, Button, Text, TextInput } from "grommet";
-import { Moon, Sun, Search } from "grommet-icons";
+import { Grommet, Header, Box, Button, Text, TextInput, Drop } from "grommet";
+import { Moon, Sun, Search, Notification } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
 import Landing from "./Landing"; 
@@ -34,14 +34,25 @@ const theme = deepMerge({
 const AppBar = ({ dark, setDark }) => {
   const [hoveredButton, setHoveredButton] = useState(null); // Track which button is hovered
   const [searchQuery, setSearchQuery] = useState("");
-  const navigate = useNavigate(); // Use the navigate hook here
+  const [showNotifications, setShowNotifications] = useState(false); // Track notification visibility
+  const notificationButtonRef = useRef(); // Reference for the notification button
+  const navigate = useNavigate();
 
   const handleSearchSubmit = (event) => {
-    event.preventDefault(); // Prevent the form from reloading the page
+    event.preventDefault();
     if (searchQuery.trim()) {
-      navigate("/search", { state: { query: searchQuery } }); // Pass query via React Router state
+      navigate("/search", { state: { query: searchQuery } });
     }
   };
+
+  //load and replace with api call
+  const notifications = [
+    { id: 1, message: "Your ticket for 'The Great Gatsby' is confirmed!" },
+    { id: 2, message: "Reminder: 'Wall-E' starts at 6 PM today." },
+    { id: 3, message: "Your refund for 'Cars' has been processed." },
+    { id: 4, message: "News: The gladiator III is coming out in 10 days. Book your tickets now!" },
+
+  ];
 
   return (
     <Header
@@ -64,7 +75,7 @@ const AppBar = ({ dark, setDark }) => {
             background="white"
             round="small"
             pad="xsmall"
-            style={{ height: "32px", paddingLeft: "8px" }} // Thinner bar
+            style={{ height: "32px", paddingLeft: "8px" }}
           >
             <TextInput
               placeholder="Search..."
@@ -72,9 +83,9 @@ const AppBar = ({ dark, setDark }) => {
               onChange={(event) => setSearchQuery(event.target.value)}
               plain
               style={{
-                fontSize: "14px", // Smaller font size
-                height: "24px", // Thinner input field
-                border: "none", // Remove borders
+                fontSize: "14px",
+                height: "24px",
+                border: "none",
               }}
             />
             <Button
@@ -82,13 +93,57 @@ const AppBar = ({ dark, setDark }) => {
               type="submit"
               a11yTitle="Search"
               style={{
-                width: "24px", // Smaller button width
-                height: "24px", // Smaller button height
-                padding: "0", // Remove extra padding
+                width: "24px",
+                height: "24px",
+                padding: "0",
               }}
             />
           </Box>
         </form>
+
+        {/* Notifications */}
+        <Box ref={notificationButtonRef}>
+          <Button
+            icon={<Notification />}
+            onClick={() => setShowNotifications(!showNotifications)}
+            a11yTitle="Notifications"
+            style={{
+              height: "42px",
+              width: "42px",
+              borderRadius: "50%",
+              padding: "0",
+              color: hoveredButton === "notifications" ? "lightblue" : "white",
+              cursor: "pointer",
+            }}
+            onMouseEnter={() => setHoveredButton("notifications")}
+            onMouseLeave={() => setHoveredButton(null)}
+          />
+          {showNotifications && notificationButtonRef.current && (
+            <Drop
+              align={{ top: "bottom", right: "right" }}
+              target={notificationButtonRef.current}
+              onClickOutside={() => setShowNotifications(false)}
+              onEsc={() => setShowNotifications(false)}
+            >
+              <Box pad="small" background="light-1" width="medium" >
+                <Text weight="bold" margin={{ bottom: "small" }}>
+                  Notifications
+                </Text>
+                {notifications.map((notif) => (
+                  <Box
+                    key={notif.id}
+                    pad="small"
+                    margin={{ bottom: "xsmall" }}
+                    background="light-2"
+                    round="small"
+                  >
+                    <Text size="small">{notif.message}</Text>
+                  </Box>
+                ))}
+              </Box>
+            </Drop>
+          )}
+        </Box>
 
         <Link to="/login" style={{ textDecoration: "none" }}>
           <Button

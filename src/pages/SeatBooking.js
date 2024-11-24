@@ -5,6 +5,9 @@ import { Box, Button, Text, Heading } from "grommet";
 const rows = 6; // Number of rows in the seat map
 const cols = 8; // Number of seats per row
 
+// Example of unavailable seats
+const unavailableSeats = ["A2", "A3", "D5", "E7", "E8"];
+
 const SeatBookingPage = () => {
   const location = useLocation();
   const { theatre, movie, showtime } = location.state; // Access the passed state
@@ -12,6 +15,7 @@ const SeatBookingPage = () => {
 
   const toggleSeat = (row, col) => {
     const seat = `${String.fromCharCode(65 + row)}${col + 1}`; // Convert row to letter and add column number
+    if (unavailableSeats.includes(seat)) return; // Prevent selecting unavailable seats
     setSelectedSeats((prev) =>
       prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]
     );
@@ -93,6 +97,7 @@ const SeatBookingPage = () => {
                 .map((_, col) => {
                   const seat = `${String.fromCharCode(65 + row)}${col + 1}`; // Seat identifier
                   const isSelected = selectedSeats.includes(seat);
+                  const isUnavailable = unavailableSeats.includes(seat); // Check if seat is unavailable
                   return (
                     <Button
                       key={seat}
@@ -101,12 +106,22 @@ const SeatBookingPage = () => {
                       style={{
                         width: "30px",
                         height: "30px",
-                        background: isSelected ? "#007bff" : "#fff", // Blue for selected, white for deselected
+                        background: isUnavailable
+                          ? "#ddd" // Grey for unavailable seats
+                          : isSelected
+                          ? "#007bff" // Blue for selected seats
+                          : "#fff", // White for unselected seats
                         border: "2px solid",
-                        borderColor: isSelected ? "#007bff" : "#ccc", // Blue border for selected
+                        borderColor: isUnavailable
+                          ? "#ddd"
+                          : isSelected
+                          ? "#007bff"
+                          : "#ccc", // Match border color
                         transition: "background-color 0.3s ease, border-color 0.3s ease", // Smooth transition
                         borderRadius: "4px", // Rounded corners for buttons
+                        cursor: isUnavailable ? "not-allowed" : "pointer", // Change cursor for unavailable seats
                       }}
+                      disabled={isUnavailable} // Disable button for unavailable seats
                     />
                   );
                 })}

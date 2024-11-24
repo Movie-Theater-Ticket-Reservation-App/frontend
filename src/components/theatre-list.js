@@ -38,7 +38,7 @@ const TheatreList = ({ theatres }) => {
                       {movie.showtimes.map((time, timeIndex) => (
                         <Link
                           key={timeIndex}
-                          to={`/seat-booking/${index}/${movieIndex}/${time}`}
+                          to={`/seat-booking/${index}/${theatre.id}/${movieIndex}/${time}`}
                           state={{ theatre, movie, showtime: time }}
                           style={{ textDecoration: "none" }}
                         >

@@ -15,28 +15,6 @@ import { Autoplay } from "../components/carousel-autoplay.js";
 import TheatreList from "../components/theatre-list.js";
 import { Link } from "react-router-dom";
 
-const CardTemplate = ({ title }) => {
-  const size = useContext(ResponsiveContext);
-  return (
-    <Card>
-      <CardHeader pad="medium">
-        <Heading level={2} margin="none">
-          {title}
-        </Heading>
-      </CardHeader>
-      <CardBody pad="medium">
-        <Paragraph maxLines={size === "small" ? 3 : undefined}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas
-          porttitor non nulla ac vehicula.
-        </Paragraph>
-      </CardBody>
-      <CardFooter pad="medium" background="background-contrast">
-        Footer
-      </CardFooter>
-    </Card>
-  );
-};
-
 const Landing = ({ dark }) => {
   const theatreData = [
     {

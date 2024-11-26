@@ -1,10 +1,10 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Box, Page, PageHeader, Text, Button, Card, CardBody, CardFooter, Image } from "grommet";
+import { useLocation } from "react-router-dom";
+import { Box, Page, PageHeader, Text, Button, Card, CardBody, Image } from "grommet";
+import { Link } from "react-router-dom";
 
 const Search = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
   const query = location.state?.query || "";
 
@@ -39,46 +39,6 @@ const Search = () => {
     },
   ];
 
-  const theatreData = [
-    {
-      name: "Cineplex VIP Cinemas University District",
-      location: "Calgary, AB",
-      distance: "1km",
-      movies: [
-        {
-          title: "The Great Gatsby",
-          rating: "PG-13",
-          duration: "2h 23min",
-          genre: "Drama, Romance",
-          showtimes: ["4:30 PM", "8:30 PM"],
-          image: "/images/posters/gatsbyPoster.png",
-        },
-        {
-          title: "Cars",
-          rating: "G",
-          duration: "1h 57min",
-          genre: "Animation, Comedy",
-          showtimes: ["5:15 PM", "6:45 PM", "9:00 PM"],
-          image: "/images/posters/carsPoster.jpeg",
-        },
-      ],
-    },
-    {
-      name: "Cineplex Odeon Westhills Cinemas",
-      location: "Calgary, AB",
-      distance: "7km",
-      movies: [
-        {
-          title: "Wall-E",
-          rating: "G",
-          duration: "1h 38min",
-          genre: "Animation, Adventure",
-          showtimes: ["12:50 PM", "3:00 PM"],
-          image: "/images/posters/wallePoster.jpg",
-        },
-      ],
-    },]
-
   const filteredMovies = allMovies.filter((movie) =>
     movie.title.toLowerCase().includes(query.toLowerCase())
   );
@@ -89,10 +49,10 @@ const Search = () => {
         <PageHeader title={`Search Results for "${query}"`} />
         {filteredMovies.length > 0 ? (
           <Box gap="medium" width="large">
-            {filteredMovies.map((movie) => (
+            {filteredMovies.map((movie, movieIndex) => (
               <Card key={movie.id} background="white" elevation="small" round="small">
                 <CardBody pad="small" direction="row" gap="small" align="center">
-                  <Image src={movie.image} alt={movie.title} fit="contain" height="300x"/>
+                  <Image src={movie.image} alt={movie.title} fit="contain" height="300px" />
                   <Box>
                     <Text size="large" weight="bold">
                       {movie.title}
@@ -101,20 +61,24 @@ const Search = () => {
                       {movie.rating} | {movie.runtime} | {movie.genre}
                     </Text>
                     <Box direction="row" gap="small" wrap>
-                      {movie.times.map((time) => (
-                        <Button
-                          key={time}
-                          label={time}
-                          onClick={() => navigate(`/movie/${movie.id}`)}
-                          plain
-                          style={{
-                            border: "1px solid #00739D",
-                            borderRadius: "5px",
-                            padding: "5px",
-                            color: "#00739D",
-                            cursor: "pointer",
-                          }}
-                        />
+                      {movie.times.map((time, timeIndex) => (
+                        <Link
+                          key={timeIndex}
+                          to={`/seat-booking/0/${movieIndex}/${time}`} // Use a placeholder (e.g., "0") for theatre index if not applicable
+                          state={{
+                            theatre: { name: "Sample Theatre" }, // Replace with actual theatre info if available
+                            movie,
+                            showtime: time,
+                          }} // Pass movie, theatre, and showtime details via state
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Button
+                            label={time}
+                            primary
+                            color="brand"
+                            size="small"
+                          />
+                        </Link>
                       ))}
                     </Box>
                   </Box>
@@ -128,8 +92,8 @@ const Search = () => {
           </Box>
         )}
         <Box direction="row" gap="small" justify="center" margin={{ top: "medium" }}>
-          <Button label="Go Back" onClick={() => navigate(-1)} />
-          <Button label="Home" onClick={() => navigate("/")} primary />
+          <Button label="Go Back" onClick={() => window.history.back()} />
+          <Button label="Home" onClick={() => (window.location.href = "/")} primary />
         </Box>
       </Box>
     </Page>

@@ -12,6 +12,7 @@ import {
   Layer,
   Select,
 } from "grommet";
+import { Close } from "grommet-icons";
 
 const Profile = () => {
   const [user, setUser] = useState({
@@ -38,6 +39,7 @@ const Profile = () => {
     expiry: "",
     ccv: "",
   });
+  const [notification, setNotification] = useState(null);
 
   const size = useContext(ResponsiveContext);
 
@@ -53,7 +55,10 @@ const Profile = () => {
   const handleSave = () => {
     setUser(formData);
     setEditMode(false);
-    alert("Profile updated!");
+    setNotification("Profile updated successfully!");
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
   };
 
   const handleDeletePayment = (index) => {
@@ -94,6 +99,34 @@ const Profile = () => {
 
   return (
     <Page background="light-3" fill>
+      {notification && (
+        <Layer
+          position="top"
+          modal={false}
+          margin={{ vertical: "medium", horizontal: "small" }}
+          onEsc={() => setNotification(null)}
+          responsive={false}
+          plain
+        >
+          <Box
+            align="center"
+            direction="row"
+            gap="small"
+            justify="between"
+            round="small"
+            elevation="medium"
+            pad={{ vertical: "small", horizontal: "medium" }}
+            background="status-ok"
+          >
+            <Text>{notification}</Text>
+            <Button
+              icon={<Close />}
+              onClick={() => setNotification(null)}
+              plain
+            />
+          </Box>
+        </Layer>
+      )}
       <Box
         fill
         align="center"
@@ -311,6 +344,7 @@ const Profile = () => {
                 <TextInput
                   name="ccv"
                   placeholder="***"
+                  type="password"
                   value={currentPayment.ccv}
                   onChange={(e) =>
                     setCurrentPayment({ ...currentPayment, ccv: e.target.value })

@@ -34,25 +34,24 @@ const theme = deepMerge({
 
 const AppBar = ({ dark, setDark }) => {
   const [hoveredButton, setHoveredButton] = useState(null); // Track which button is hovered
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // Track search query
   const [showNotifications, setShowNotifications] = useState(false); // Track notification visibility
   const notificationButtonRef = useRef(); // Reference for the notification button
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // Hook for navigation 
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     if (searchQuery.trim()) {
-      navigate("/search", { state: { query: searchQuery } });
+      navigate(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
-  //load and replace with api call
+  // Load and replace with API call
   const notifications = [
     { id: 1, message: "Your ticket for 'The Great Gatsby' is confirmed!" },
     { id: 2, message: "Reminder: 'Wall-E' starts at 6 PM today." },
     { id: 3, message: "Your refund for 'Cars' has been processed." },
-    { id: 4, message: "News: The gladiator III is coming out in 10 days. Book your tickets now!" },
-
+    { id: 4, message: "News: The Gladiator III is coming out in 10 days. Book your tickets now!" },
   ];
 
   return (
@@ -126,7 +125,7 @@ const AppBar = ({ dark, setDark }) => {
               onClickOutside={() => setShowNotifications(false)}
               onEsc={() => setShowNotifications(false)}
             >
-              <Box pad="small" background="light-1" width="medium" >
+              <Box pad="small" background="light-1" width="medium">
                 <Text weight="bold" margin={{ bottom: "small" }}>
                   Notifications
                 </Text>

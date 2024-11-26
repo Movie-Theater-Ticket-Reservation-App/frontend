@@ -10,8 +10,14 @@ const unavailableSeats = ["A2", "A3", "D5", "E7", "E8"];
 
 const SeatBookingPage = () => {
   const location = useLocation();
-  const { theatre, movie, showtime } = location.state; // Access the passed state
+  const { theatre, movie, showtime } = location.state || {}; // Access the passed state
+
   const [selectedSeats, setSelectedSeats] = useState([]);
+
+  // Handle the case where location.state is null or missing properties
+  if (!theatre || !movie || !showtime) {
+    return <div>Error: Missing booking details.</div>;
+  }
 
   const toggleSeat = (row, col) => {
     const seat = `${String.fromCharCode(65 + row)}${col + 1}`; // Convert row to letter and add column number
@@ -40,13 +46,14 @@ const SeatBookingPage = () => {
           Select Your Seats
         </Heading>
         <Text size="large" weight="bold" margin={{ top: "small" }}>
-          Theatre: <span style={{ color: "#007bff" }}>{theatre.name}</span>
+          Theatre:{" "}
+          <span style={{ color: "#007bff" }}>{theatre.theatreName}</span>
         </Text>
         <Text size="large" weight="bold">
-          Movie: <span style={{ color: "#007bff" }}>{movie.title}</span>
+          Movie: <span style={{ color: "#007bff" }}>{movie.movieTitle}</span>
         </Text>
         <Text size="medium" color="dark-5" margin={{ bottom: "medium" }}>
-          Showtime: {showtime}
+          Showtime: {showtime.date} at {showtime.time}
         </Text>
       </Box>
 
@@ -117,7 +124,8 @@ const SeatBookingPage = () => {
                           : isSelected
                           ? "#007bff"
                           : "#ccc", // Match border color
-                        transition: "background-color 0.3s ease, border-color 0.3s ease", // Smooth transition
+                        transition:
+                          "background-color 0.3s ease, border-color 0.3s ease", // Smooth transition
                         borderRadius: "4px", // Rounded corners for buttons
                         cursor: isUnavailable ? "not-allowed" : "pointer", // Change cursor for unavailable seats
                       }}

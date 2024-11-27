@@ -1,5 +1,6 @@
 import React from 'react';
 import { Grid, Box, Image, Text, ResponsiveContext } from 'grommet';
+import { Link } from 'react-router-dom';
 
 const MovieGrid = ({ movies }) => {
   return (
@@ -20,6 +21,11 @@ const MovieGrid = ({ movies }) => {
           pad="medium"
         >
           {movies.map((movie, index) => (
+            <Link
+            key={index}
+            to={`/search?query=${encodeURIComponent(movie.title)}`} // Redirect to Search with query parameter
+            style={{ textDecoration: 'none' }}
+          >
             <Box
               key={index}
               pad="medium"
@@ -28,9 +34,12 @@ const MovieGrid = ({ movies }) => {
               elevation="medium"
               background="white"
               style={{
-                width: '100%', // Ensure width is responsive
+                width: '110%', // Ensure width is responsive
                 maxWidth: '300px', // Limit max width for better visuals
                 textAlign: 'center',
+              }}
+              hoverIndicator={{
+                background: { color: 'light-2', opacity: 'strong' },
               }}
             >
               <Image
@@ -55,6 +64,7 @@ const MovieGrid = ({ movies }) => {
                 </Text>
               </Box>
             </Box>
+            </Link>
           ))}
         </Grid>
       )}

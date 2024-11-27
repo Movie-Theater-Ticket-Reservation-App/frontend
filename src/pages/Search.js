@@ -137,6 +137,23 @@ Showtime: ${showtime.time}`;
     }, 2000);
   };
 
+  useEffect(() => {
+    // Set default theater and tomorrow's date
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1); // Increment the current date by 1
+    const formattedTomorrow = tomorrow.toISOString().slice(0, 10); // Format it to YYYY-MM-DD
+  
+    setSelectedTheatre(theatres[0]?.theatreID || null); // Default to the first theater
+    setSelectedDate(formattedTomorrow); // Set tomorrow's date
+  
+    // Automatically apply search parameters
+    setSearchParams((prev) => ({
+      ...prev,
+      selectedTheatre: theatres[0]?.theatreID || null,
+      selectedDate: formattedTomorrow,
+    }));
+  }, []);
+
   // Filter movies based on submitted search parameters
   useEffect(() => {
     const { query, selectedTheatre, selectedDate } = searchParams;

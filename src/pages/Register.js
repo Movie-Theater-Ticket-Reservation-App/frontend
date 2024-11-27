@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; 
+import axios from "axios"; // Import Axios
 import {
   Box,
   Button,
@@ -21,20 +22,45 @@ const Register = () => {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // To manage loading state
   const size = useContext(ResponsiveContext); // Detect screen size
   const navigate = useNavigate(); // Hook for navigation
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!formData.name || !formData.email || !formData.password) {
       setError("Please fill in all required fields");
       return;
     }
-    setError("");
-    alert(`Registered successfully with Email: ${formData.email}`);
-    // Add API call to handle user registration logic here if needed
 
-    navigate("/login"); // Navigate to Login page after successful registration
+    setError(""); // Clear errors
+    setLoading(true); // Show loading state
+
+    try {
+      // Make API call
+      const response = await axios.post("http://localhost:8080/users/register", {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        address: formData.address || "", 
+        creditPoints: 0,
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        // On successful registration, navigate to homepage
+        alert("Registration successful!");
+        navigate("/"); // Navigate to the homepage
+      }
+    } catch (err) {
+      // Handle errors
+      if (err.response?.data?.message) {
+        setError(err.response.data.message); // Show error message from API
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false); // Hide loading state
+    }
   };
 
   return (
@@ -97,7 +123,7 @@ const Register = () => {
               />
             </FormField>
             <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
-              <Button type="submit" label="Register" primary />
+              <Button type="submit" label={loading ? "Registering..." : "Register"} primary disabled={loading} />
               <Button label="Cancel" href="/" />
             </Box>
           </Form>

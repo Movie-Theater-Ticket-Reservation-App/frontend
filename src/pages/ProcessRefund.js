@@ -162,10 +162,10 @@ const ProcessRefund = () => {
                 <Text>
                   <strong>Refund Amount:</strong> $
                   {refundEligible
-                    ? (
-                        selectedTicket.price -
-                        (selectedTicket.isRegisteredUser ? 0 : selectedTicket.price * 0.15)
-                      ).toFixed(2)
+                    ? (() => {
+                        const adminFee = selectedTicket.isRegisteredUser ? 0 : selectedTicket.price * 0.15;
+                        return (selectedTicket.price - adminFee).toFixed(2);
+                      })()
                     : "N/A"}
                 </Text>
               </Box>

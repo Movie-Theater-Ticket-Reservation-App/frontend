@@ -182,22 +182,6 @@ const AppBar = ({ dark, setDark }) => {
             onMouseLeave={() => setHoveredButton(null)}
           />
         </Link>
-        {/* Light/Dark Mode Button */}
-        <Button
-          icon={dark ? <Moon /> : <Sun />}
-          onClick={() => setDark(!dark)}
-          a11yTitle={dark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          style={{
-            height: "42px",
-            width: "42px",
-            borderRadius: "50%",
-            padding: "0",
-            color: hoveredButton === "theme" ? "lightblue" : "white",
-            cursor: "pointer",
-          }}
-          onMouseEnter={() => setHoveredButton("theme")}
-          onMouseLeave={() => setHoveredButton(null)}
-        />
       </Box>
     </Header>
   );

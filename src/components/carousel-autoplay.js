@@ -4,7 +4,7 @@ import { Box, Carousel, Text, Button, Image } from 'grommet';
 // Height for movie content
 const contentHeight = "60vh"; // Full viewport height
 
-export const Autoplay = ({dark}) => (
+export const Autoplay = () => (
   <Box fill="horizontal" align="center" pad="none" margin={{ bottom: "small" }}>
     <Carousel controls={false} play={5000} fill>
       {/* Hero Section */}
@@ -26,15 +26,13 @@ export const Autoplay = ({dark}) => (
             left: 0,
             height: "100%",
             width: "100%",
-            background: dark
-              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0))"
-              : "linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0))",
+            background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0))",
           }}
         >
-          <Text size="xxlarge" weight="bold" color={dark ? "light-1" : "dark-1"}>
+          <Text size="xxlarge" weight="bold" color="light-1">
             The Great Gatsby
           </Text>
-          <Text size="large" color={dark ? "light-1" : "dark-1"} margin={{ vertical: "medium" }}>
+          <Text size="large" color="light-1" margin={{ vertical: "medium" }}>
             A timeless tale of ambition, love, and the pursuit of the American dream.
           </Text>
           <Box direction="row" gap="small">
@@ -85,15 +83,13 @@ export const Autoplay = ({dark}) => (
             left: 0,
             height: "100%",
             width: "100%",
-            background: dark
-              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0))"
-              : "linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0))",
+            background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0))"
           }}
         >
-          <Text size="xxlarge" weight="bold" color={dark ? "light-1" : "dark-1"}>
+          <Text size="xxlarge" weight="bold" color="light-1">
             Cars
           </Text>
-          <Text size="large" color={dark ? "light-1" : "dark-1"} margin={{ vertical: "medium" }}>
+          <Text size="large" color="light-1" margin={{ vertical: "medium" }}>
             A high-octane journey of racing, rivalry, and redemption.
           </Text>
           <Box direction="row" gap="small">
@@ -143,15 +139,13 @@ export const Autoplay = ({dark}) => (
             left: 0,
             height: "100%",
             width: "100%",
-            background: dark
-              ? "linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0))"
-              : "linear-gradient(to bottom, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0))",
+            background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0))"
           }}
         >
-          <Text size="xxlarge" weight="bold" color={dark ? "light-1" : "dark-1"}>
+          <Text size="xxlarge" weight="bold" color="light-1">
             Wall-E
           </Text>
-          <Text size="large" color={dark ? "light-1" : "dark-1"} margin={{ vertical: "medium" }}>
+          <Text size="large" color="light-1" margin={{ vertical: "medium" }}>
             A lonely robot’s mission to save Earth turns into an extraordinary love story.”
           </Text>
           <Box direction="row" gap="small">

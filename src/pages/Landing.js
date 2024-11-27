@@ -77,10 +77,10 @@ const Landing = ({ dark }) => {
   }, []);
 
   return (
-    <Page background={dark ? "dark-1" : "light-4"}>
+    <Page background="light-3">
       <PageContent>
         {/* Hero Carousel */}
-        <Autoplay dark={dark} />
+        <Autoplay />
         {/* Tickets Section */}
         <Box align="start" pad={{ left: "medium", top: "medium" }}>
           <Heading level={1} size="large">

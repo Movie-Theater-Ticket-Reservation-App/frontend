@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -13,6 +13,7 @@ import {
 } from "grommet";
 import { Autoplay } from "../components/carousel-autoplay.js";
 import TheatreList from "../components/theatre-list.js";
+import MovieGrid from '../components/moviegrid.js';
 import { Link } from "react-router-dom";
 
 const Landing = ({ dark }) => {
@@ -57,21 +58,39 @@ const Landing = ({ dark }) => {
     },
   ];
 
+  const [movies, setMovies] = useState([]); // Define the state for movies
+
+  useEffect(() => {
+    // Extract movies from theatreData
+    const fetchedMovies = theatreData.flatMap((theatre) =>
+      theatre.movies.map((movie) => ({
+        title: movie.title,
+        releaseDate: movie.duration, // Assuming "duration" is used as a proxy for release date; replace if actual release date is available
+        poster: movie.image,
+        rating: movie.rating,
+        genre: movie.genre,
+        theatreName: theatre.name, // Add theatre name to the movie for additional context
+      }))
+    );
+  
+    setMovies(fetchedMovies);
+  }, []);
+
   return (
-    <Page background={dark ? "dark-1" : "light-4"}>
+    <Page background="light-3">
       <PageContent>
         {/* Hero Carousel */}
-        <Autoplay dark={dark} />
-
+        <Autoplay />
         {/* Tickets Section */}
         <Box align="start" pad={{ left: "medium", top: "medium" }}>
           <Heading level={1} size="large">
-            Tickets
+            Movies
           </Heading>
         </Box>
-
-        {/* Theatre List */}
-        <TheatreList theatres={theatreData} />
+        <MovieGrid movies={movies} />
+        <Box pad="large">
+      
+    </Box>
       </PageContent>
     </Page>
   );

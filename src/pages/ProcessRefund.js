@@ -19,17 +19,18 @@ const ProcessRefund = () => {
   // Form data and error state
   const [formData, setFormData] = useState({
     ticketID: "",
-    refundReason: "",
   });
   const [error, setError] = useState("");
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [refundEligible, setRefundEligible] = useState(false);
+  const [lookupMode, setLookupMode] = useState(true);
 
   // Mock data for tickets
   const tickets = [
     {
       ticketID: "001",
       movieTitle: "The Great Gatsby",
-      showtime: "2024-11-28T16:30:00Z",
+      showtime: "2024-12-28T16:30:00Z",
       price: 19.0,
       purchaseDate: "2024-11-15T00:00:00Z",
       isRegisteredUser: false,
@@ -45,55 +46,63 @@ const ProcessRefund = () => {
       status: "Cancelled", // Ticket has been cancelled
     },
     {
-        ticketID: "003",
-        movieTitle: "Wall-E",
-        showtime: "2024-11-25T14:00:00Z",
-        price: 15.0,
-        purchaseDate: "2024-11-12T00:00:00Z",
-        isRegisteredUser: true,
-        status: "Valid", // Ticket has been cancelled
-      },
+      ticketID: "003",
+      movieTitle: "Wall-E",
+      showtime: "2024-11-25T14:00:00Z",
+      price: 15.0,
+      purchaseDate: "2024-11-12T00:00:00Z",
+      isRegisteredUser: true,
+      status: "Valid", // Ticket is valid
+    },
   ];
 
   // Handle ticket ID input and validation
   const handleTicketIDChange = (event) => {
     const enteredTicketID = event.target.value;
     setFormData({ ...formData, ticketID: enteredTicketID });
+    setSelectedTicket(null); // Clear selected ticket on change
+    setError(""); // Clear any error
+    setLookupMode(true); // Reset to lookup mode
+  };
 
-    // Find matching ticket
-    const matchingTicket = tickets.find((ticket) => ticket.ticketID === enteredTicketID);
+  const handleLookUp = () => {
+    const matchingTicket = tickets.find((ticket) => ticket.ticketID === formData.ticketID);
+  
     if (matchingTicket) {
       if (matchingTicket.status === "Cancelled") {
         setError("Refund is not allowed. This ticket has already been cancelled.");
-        setSelectedTicket(null); // Clear the selected ticket
+        setSelectedTicket(null);
       } else {
         setSelectedTicket(matchingTicket);
-        setError(""); // Clear any previous error
+  
+        // Check refund eligibility
+        const eligible = isRefundEligible(matchingTicket.showtime);
+        if (!eligible) {
+          setError("Refunds can only be requested at least 72 hours before the showtime.");
+          setRefundEligible(false);
+        } else {
+          setRefundEligible(true);
+          setError(""); // Clear any error
+          setLookupMode(false); // Switch to "Submit Refund" mode
+        }
       }
     } else {
-      setSelectedTicket(null);
       setError("Invalid Ticket ID");
+      setSelectedTicket(null);
     }
   };
 
-  // Handle form submission
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (!formData.ticketID || !formData.refundReason || !selectedTicket) {
-      setError("Please fill in all fields");
-      return;
-    }
-    if (!isRefundEligible(selectedTicket.showtime)) {
-      setError("Refunds can only be requested at least 72 hours before the showtime.");
+  const handleSubmitRefund = () => {
+    if (!selectedTicket || !refundEligible) {
+      setError("Refund is not eligible.");
       return;
     }
 
     const adminFee = selectedTicket.isRegisteredUser ? 0 : selectedTicket.price * 0.15;
     const refundAmount = selectedTicket.price - adminFee;
 
-    setError("");
     alert(`Refund of $${refundAmount.toFixed(2)} processed successfully!`);
-    navigate("/payments");
+    navigate("/");
   };
 
   // 72-Hour Cancellation Check
@@ -125,7 +134,7 @@ const ProcessRefund = () => {
               {error}
             </Text>
           )}
-          <Form onSubmit={handleSubmit}>
+          <Form>
             <FormField label="Ticket ID" name="ticketID" required>
               <TextInput
                 name="ticketID"
@@ -134,18 +143,7 @@ const ProcessRefund = () => {
                 onChange={handleTicketIDChange}
               />
             </FormField>
-            <FormField label="Reason for Refund" name="refundReason" required>
-              <TextInput
-                name="refundReason"
-                placeholder="Briefly explain the reason"
-                value={formData.refundReason}
-                onChange={(event) =>
-                  setFormData({ ...formData, refundReason: event.target.value })
-                }
-              />
-            </FormField>
 
-            {/* Ticket Details */}
             {selectedTicket && (
               <Box margin={{ top: "medium" }}>
                 <Text>
@@ -155,34 +153,47 @@ const ProcessRefund = () => {
                   <strong>Showtime:</strong> {new Date(selectedTicket.showtime).toLocaleString()}
                 </Text>
                 <Text>
-                  <strong>Purchase Date:</strong> {new Date(selectedTicket.purchaseDate).toLocaleDateString()}
+                  <strong>Purchase Date:</strong>{" "}
+                  {new Date(selectedTicket.purchaseDate).toLocaleDateString()}
                 </Text>
                 <Text>
                   <strong>Ticket Price:</strong> ${selectedTicket.price.toFixed(2)}
                 </Text>
-                {!selectedTicket.isRegisteredUser && (
-                  <Text>
-                    <strong>Admin Fee (15%):</strong> -${(selectedTicket.price * 0.15).toFixed(2)}
-                  </Text>
-                )}
                 <Text>
                   <strong>Refund Amount:</strong> $
-                  {(selectedTicket.price - (selectedTicket.isRegisteredUser ? 0 : selectedTicket.price * 0.15)).toFixed(
-                    2
-                  )}
+                  {refundEligible
+                    ? (
+                        selectedTicket.price -
+                        (selectedTicket.isRegisteredUser ? 0 : selectedTicket.price * 0.15)
+                      ).toFixed(2)
+                    : "N/A"}
                 </Text>
               </Box>
             )}
 
-            <Box
-              direction="row"
-              gap="medium"
-              justify="center"
-              margin={{ top: "medium" }}
-            >
-              <Button type="submit" label="Submit Refund" primary />
-              <Button label="Cancel" href="/" />
-            </Box>
+<Box
+  direction="row"
+  gap="medium"
+  justify="center"
+  margin={{ top: "medium" }}
+>
+  {lookupMode ? (
+    <Button
+      type="button"
+      label="Look Up"
+      primary
+      onClick={handleLookUp}
+    />
+  ) : (
+    <Button
+      type="button"
+      label="Submit Refund"
+      primary
+      onClick={handleSubmitRefund}
+    />
+  )}
+  <Button label="Cancel" href="/" />
+</Box>
           </Form>
         </Box>
       </Box>

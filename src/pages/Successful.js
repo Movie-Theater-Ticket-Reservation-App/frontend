@@ -20,6 +20,7 @@ const Successful = ({ ticketDetails }) => {
       showtime: "4:30 PM, Nov 28, 2024",
       seat: "Row A, Seat 11",
     },
+    
   ];
 
   return (
@@ -42,6 +43,9 @@ const Successful = ({ ticketDetails }) => {
         <Box margin={{ bottom: "medium" }}>
           <Text size="large" weight="bold">
             Thank you for your reservation!
+          </Text>
+          <Text size="large" weight="bold">
+            Your booking and receipt will be sent to your email.
           </Text>
           <Text size="medium" color="dark-6">
             Here are your ticket details:

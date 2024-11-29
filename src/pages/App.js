@@ -1,22 +1,24 @@
-import React, { useState, useRef } from "react";
+import React, { useContext } from "react";
+import { useState, useRef } from "react";
+
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { Grommet, Header, Box, Button, Text, TextInput, Drop } from "grommet";
-import { Moon, Sun, Search, Notification } from "grommet-icons";
+import { Search, Notification } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
-import Landing from "./Landing"; 
-import Login from "./Login"; 
+import { AuthProvider, AuthContext } from "../context/AuthContext"; // Import AuthContext and Provider
+
+import Landing from "./Landing";
+import Login from "./Login";
 import Profile from "./Profile";
 import Register from "./Register";
 import Tickets from "./Tickets";
-import Payments from "./Payments"; 
+import Payments from "./Payments";
 import Searches from "./Search";
 import Successful from "./Successful";
 import SeatBooking from "./SeatBooking";
-
 import MakePayment from "./MakePayment";
 import ProcessRefund from "./ProcessRefund";
-
 import NotFound from "./404";
 
 const theme = deepMerge({
@@ -37,13 +39,19 @@ const AppBar = ({ dark, setDark }) => {
   const [searchQuery, setSearchQuery] = useState(""); // Track search query
   const [showNotifications, setShowNotifications] = useState(false); // Track notification visibility
   const notificationButtonRef = useRef(); // Reference for the notification button
-  const navigate = useNavigate(); // Hook for navigation 
+  const navigate = useNavigate(); // Hook for navigation
+  const { userID, logout } = useContext(AuthContext); // Access userID and logout from AuthContext
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?query=${encodeURIComponent(searchQuery.trim())}`);
     }
+  };
+
+  const handleLogout = () => {
+    logout(); // Clear the user session
+    navigate("/"); // Redirect to the homepage
   };
 
   // Load and replace with API call
@@ -102,56 +110,97 @@ const AppBar = ({ dark, setDark }) => {
         </form>
 
         {/* Notifications */}
-        <Box ref={notificationButtonRef}>
-          <Button
-            icon={<Notification />}
-            onClick={() => setShowNotifications(!showNotifications)}
-            a11yTitle="Notifications"
-            style={{
-              height: "42px",
-              width: "42px",
-              borderRadius: "50%",
-              padding: "0",
-              color: hoveredButton === "notifications" ? "lightblue" : "white",
-              cursor: "pointer",
-            }}
-            onMouseEnter={() => setHoveredButton("notifications")}
-            onMouseLeave={() => setHoveredButton(null)}
-          />
-          {showNotifications && notificationButtonRef.current && (
-            <Drop
-              align={{ top: "bottom", right: "right" }}
-              target={notificationButtonRef.current}
-              onClickOutside={() => setShowNotifications(false)}
-              onEsc={() => setShowNotifications(false)}
-            >
-              <Box pad="small" background="light-1" width="medium">
-                <Text weight="bold" margin={{ bottom: "small" }}>
-                  Notifications
-                </Text>
-                {notifications.map((notif) => (
-                  <Box
-                    key={notif.id}
-                    pad="small"
-                    margin={{ bottom: "xsmall" }}
-                    background="light-2"
-                    round="small"
-                  >
-                    <Text size="small">{notif.message}</Text>
-                  </Box>
-                ))}
-              </Box>
-            </Drop>
-          )}
-        </Box>
+        {userID && (
+          <Box ref={notificationButtonRef}>
+            <Button
+              icon={<Notification />}
+              onClick={() => setShowNotifications(!showNotifications)}
+              a11yTitle="Notifications"
+              style={{
+                height: "42px",
+                width: "42px",
+                borderRadius: "50%",
+                padding: "0",
+                color: hoveredButton === "notifications" ? "lightblue" : "white",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHoveredButton("notifications")}
+              onMouseLeave={() => setHoveredButton(null)}
+            />
+            {showNotifications && notificationButtonRef.current && (
+              <Drop
+                align={{ top: "bottom", right: "right" }}
+                target={notificationButtonRef.current}
+                onClickOutside={() => setShowNotifications(false)}
+                onEsc={() => setShowNotifications(false)}
+              >
+                <Box pad="small" background="light-1" width="medium">
+                  <Text weight="bold" margin={{ bottom: "small" }}>
+                    Notifications
+                  </Text>
+                  {notifications.map((notif) => (
+                    <Box
+                      key={notif.id}
+                      pad="small"
+                      margin={{ bottom: "xsmall" }}
+                      background="light-2"
+                      round="small"
+                    >
+                      <Text size="small">{notif.message}</Text>
+                    </Box>
+                  ))}
+                </Box>
+              </Drop>
+            )}
+          </Box>
+        )}
 
-        <Link to="/login" style={{ textDecoration: "none" }}>
+        {/* Conditionally Render Buttons */}
+        {userID ? (
+          <>
+            <Button
+              label="Profile"
+              plain
+              onClick={() => navigate("/profile")}
+              style={{
+                height: "42px",
+                padding: "0 16px",
+                borderRadius: "4px",
+                color: hoveredButton === "profile" ? "lightblue" : "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHoveredButton("profile")}
+              onMouseLeave={() => setHoveredButton(null)}
+            />
+            <Button
+              label="Logout"
+              plain
+              onClick={handleLogout}
+              style={{
+                height: "42px",
+                padding: "0 16px",
+                borderRadius: "4px",
+                color: hoveredButton === "logout" ? "lightblue" : "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+              }}
+              onMouseEnter={() => setHoveredButton("logout")}
+              onMouseLeave={() => setHoveredButton(null)}
+            />
+          </>
+        ) : (
           <Button
             label="Login"
             plain
+            onClick={() => navigate("/login")}
             style={{
               height: "42px",
-              padding: "0",
+              padding: "0 16px",
               borderRadius: "4px",
               color: hoveredButton === "login" ? "lightblue" : "white",
               display: "flex",
@@ -162,54 +211,37 @@ const AppBar = ({ dark, setDark }) => {
             onMouseEnter={() => setHoveredButton("login")}
             onMouseLeave={() => setHoveredButton(null)}
           />
-        </Link>
-
-        <Link to="/profile" style={{ textDecoration: "none" }}>
-          <Button
-            label="Profile"
-            plain
-            style={{
-              height: "42px",
-              padding: "0 16px",
-              borderRadius: "4px",
-              color: hoveredButton === "profile" ? "lightblue" : "white",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-            onMouseEnter={() => setHoveredButton("profile")}
-            onMouseLeave={() => setHoveredButton(null)}
-          />
-        </Link>
+        )}
       </Box>
     </Header>
   );
 };
 
 function App() {
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = React.useState(false);
 
   return (
-    <Router>
-      <Grommet theme={theme} full themeMode={dark ? "dark" : "light"}>
-        <AppBar dark={dark} setDark={setDark} />
-        <Routes>
-          <Route path="/" element={<Landing dark={dark} />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/seat-booking/:theatreId/:movieId/:showtime" element={<SeatBooking />} />
-          <Route path="/tickets" element={<Tickets />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/makepayment" element={<MakePayment />} />
-          <Route path="/refund" element={<ProcessRefund />} />
-          <Route path="/search" element={<Searches />} />
-          <Route path="/successful" element={<Successful />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Grommet>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Grommet theme={theme} full themeMode={dark ? "dark" : "light"}>
+          <AppBar dark={dark} setDark={setDark} />
+          <Routes>
+            <Route path="/" element={<Landing dark={dark} />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/seat-booking/:theatreId/:movieId/:showtime" element={<SeatBooking />} />
+            <Route path="/tickets" element={<Tickets />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/makepayment" element={<MakePayment />} />
+            <Route path="/refund" element={<ProcessRefund />} />
+            <Route path="/search" element={<Searches />} />
+            <Route path="/successful" element={<Successful />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Grommet>
+      </Router>
+    </AuthProvider>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Box,
   Button,
@@ -13,23 +13,13 @@ import {
   Select,
 } from "grommet";
 import { Close } from "grommet-icons";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
 const Profile = () => {
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "johndoe@example.com",
-    password: "********",
-    membershipFee: 20.0,
-    creditPoints: 100,
-    address: "123 Main Street, Calgary, AB",
-    paymentMethods: [
-      { type: "Credit", number: "1234123412341234", owner: "John Doe", expiry: "12/25", ccv: "123" },
-      { type: "Debit", number: "5678567856785678", owner: "Jane Doe", expiry: "08/26", ccv: "456" },
-    ],
-  });
-
+  const { userID } = useContext(AuthContext); // Get userID from AuthContext
+  const [user, setUser] = useState(null); // Initial state as null until data is fetched
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState(user);
+  const [formData, setFormData] = useState({});
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentPaymentIndex, setCurrentPaymentIndex] = useState(null);
   const [currentPayment, setCurrentPayment] = useState({
@@ -40,8 +30,33 @@ const Profile = () => {
     ccv: "",
   });
   const [notification, setNotification] = useState(null);
+  const [error, setError] = useState("");
 
   const size = useContext(ResponsiveContext);
+
+  useEffect(() => {
+    console.log("userID from AuthContext:", userID); // Log userID for debugging
+    if (!userID) {
+      setError("User ID is not available. Please log in again.");
+      return;
+    }
+    
+    const fetchUserProfile = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/users/${userID}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch user profile.");
+        }
+        const data = await response.json();
+        setUser(data);
+        setFormData(data);
+      } catch (err) {
+        setError(err.message || "An error occurred while fetching user profile.");
+      }
+    };
+  
+    fetchUserProfile();
+  }, [userID]);
 
   const handleEdit = () => {
     setEditMode(true);
@@ -52,13 +67,29 @@ const Profile = () => {
     setFormData(user);
   };
 
-  const handleSave = () => {
-    setUser(formData);
-    setEditMode(false);
-    setNotification("Profile updated successfully!");
-    setTimeout(() => {
-      setNotification(null);
-    }, 3000);
+  const handleSave = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/users/${userID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+        setFormData(updatedUser);
+        setEditMode(false);
+        setNotification("Profile updated successfully!");
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        throw new Error("Failed to update profile. Please try again.");
+      }
+    } catch (err) {
+      setError(err.message || "An error occurred while updating profile.");
+    }
   };
 
   const handleDeletePayment = (index) => {
@@ -96,6 +127,17 @@ const Profile = () => {
     setFormData({ ...formData, paymentMethods: updatedPayments });
     setShowPaymentModal(false);
   };
+
+  if (!user) {
+    return (
+      <Page background="light-3" fill>
+        <Box align="center" justify="center" fill>
+          <Text>Loading...</Text>
+          {error && <Text color="status-critical">{error}</Text>}
+        </Box>
+      </Page>
+    );
+  }
 
   return (
     <Page background="light-3" fill>

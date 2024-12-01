@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Page,
@@ -22,63 +22,27 @@ const Search = () => {
   const size = useContext(ResponsiveContext);
   const navigate = useNavigate();
 
+  // Function to format date to 'yyyy-mm-dd' in local time
+  const formatDateToLocalISOString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Extract search query from URL parameters
   const queryParams = new URLSearchParams(location.search);
   const initialQuery = queryParams.get("query") || "";
 
-  // Mock data for theatres and movies aligned with API endpoints
-  const theatres = [
-    { theatreID: 1, theatreName: "Cineplex VIP Cinemas", location: "Downtown", capacity: 200 },
-    { theatreID: 2, theatreName: "Cineplex Odeon Westhills Cinemas", location: "Westhills", capacity: 150 },
-    { theatreID: 3, theatreName: "Landmark Cinemas Market Mall", location: "Market Mall", capacity: 180 },
-  ];
+  // State variables
+  const [theatres, setTheatres] = useState([]);
+  const [allMovies, setAllMovies] = useState([]);
 
-  const allMovies = [
-    {
-      movieID: 1,
-      movieTitle: "The Great Gatsby",
-      url: "/images/posters/gatsbyPoster.png",
-      rating: 13, // Assuming rating is age-based
-      duration: "2h 23min",
-      genre: "Drama, Romance",
-      showtimes: [
-        { showtimeID: 101, theatreID: 1, date: "2024-11-28", time: "4:30 PM" },
-        { showtimeID: 102, theatreID: 1, date: "2024-11-28", time: "8:30 PM" },
-        { showtimeID: 103, theatreID: 2, date: "2024-11-29", time: "2:00 PM" },
-        { showtimeID: 104, theatreID: 2, date: "2024-11-29", time: "6:00 PM" },
-        { showtimeID: 100, theatreID: 2, date: "2024-11-26", time: "6:00 PM" },
-      ],
-    },
-    {
-      movieID: 2,
-      movieTitle: "Wall-E",
-      url: "/images/posters/wallePoster.jpg",
-      rating: 0,
-      duration: "1h 38min",
-      genre: "Animation, Adventure",
-      showtimes: [
-        { showtimeID: 201, theatreID: 1, date: "2024-11-28", time: "12:50 PM" },
-        { showtimeID: 202, theatreID: 2, date: "2024-11-28", time: "3:00 PM" },
-        { showtimeID: 203, theatreID: 3, date: "2024-11-30", time: "1:30 PM" },
-        { showtimeID: 204, theatreID: 3, date: "2024-11-30", time: "4:30 PM" },
-      ],
-    },
-    {
-      movieID: 3,
-      movieTitle: "Cars",
-      url: "/images/posters/carsPoster.jpeg",
-      rating: 0,
-      duration: "1h 57min",
-      genre: "Animation, Comedy",
-      showtimes: [
-        { showtimeID: 301, theatreID: 1, date: "2024-11-28", time: "5:15 PM" },
-        { showtimeID: 302, theatreID: 1, date: "2024-11-28", time: "6:45 PM" },
-        { showtimeID: 303, theatreID: 1, date: "2024-11-28", time: "9:00 PM" },
-        { showtimeID: 304, theatreID: 3, date: "2024-11-29", time: "2:00 PM" },
-        { showtimeID: 305, theatreID: 3, date: "2024-11-29", time: "8:00 PM" },
-      ],
-    },
-  ];
+  // Create a mapping from movieTitle to movieID
+  const [titleToIdMap, setTitleToIdMap] = useState({});
+
+  // Create a mapping from movieID to movie details
+  const [idToMovieMap, setIdToMovieMap] = useState({});
 
   // States for input fields
   const [query, setQuery] = useState(initialQuery);
@@ -87,105 +51,159 @@ const Search = () => {
 
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
-  // State for search parameters after submission
-  const [searchParams, setSearchParams] = useState({
-    query: initialQuery,
-    selectedTheatre: null,
-    selectedDate: null,
-  });
-
   // State for filtered movies
   const [filteredMovies, setFilteredMovies] = useState([]);
 
-  // New state for notification
+  // State for notification
   const [notification, setNotification] = useState(null);
 
+  // Fetch theatres when the component mounts
+  useEffect(() => {
+    const fetchTheatres = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/theatres/");
+        const data = await response.json();
+        setTheatres(data);
+      } catch (error) {
+        console.error("Error fetching theatres:", error);
+      }
+    };
+    fetchTheatres();
+  }, []);
+
+  // Fetch movies when the component mounts
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/movies/");
+        const data = await response.json();
+        setAllMovies(data);
+
+        // Create title-to-ID mapping and ID-to-movie mapping
+        const titleIdMap = {};
+        const idMovieMap = {};
+        data.forEach((movie) => {
+          titleIdMap[movie.movieTitle] = movie.movieID;
+          idMovieMap[movie.movieID] = movie;
+        });
+        setTitleToIdMap(titleIdMap);
+        setIdToMovieMap(idMovieMap);
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+      }
+    };
+    fetchMovies();
+  }, []);
+
+  // Set default theatre and date after theatres are fetched
+  useEffect(() => {
+    if (theatres.length > 0) {
+      setSelectedTheatre(theatres[0].theatreID);
+    }
+
+    // Set default date to today using local time
+    const today = new Date();
+    const formattedToday = formatDateToLocalISOString(today);
+    setSelectedDate(formattedToday);
+  }, [theatres]);
+
   // Handle search submission
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!selectedTheatre || !selectedDate) {
       alert("Please select both a theatre and a date before searching.");
       return;
     }
-    setSearchParams({
-      query,
-      selectedTheatre,
-      selectedDate,
-    });
+
+    try {
+      // Fetch showtimes for the selected theatre
+      const response = await fetch(
+        `http://localhost:8080/theatres/${selectedTheatre}/showtimes`
+      );
+      const showtimesData = await response.json();
+
+      // Filter showtimes by selected date
+      const filteredShowtimes = showtimesData.filter(
+        (showtime) => showtime.date === selectedDate
+      );
+
+      // Add movieID to each showtime using the titleToIdMap
+      const showtimesWithIds = filteredShowtimes.map((showtime) => {
+        const movieID = titleToIdMap[showtime.movieTitle];
+        if (!movieID) {
+          console.warn(`Movie ID not found for title: ${showtime.movieTitle}`);
+        }
+        return { ...showtime, movieID };
+      });
+
+      // Filter out showtimes where movieID was not found
+      const validShowtimes = showtimesWithIds.filter(
+        (showtime) => showtime.movieID !== undefined
+      );
+
+      // Get unique movieIDs from the valid showtimes
+      const movieIds = [...new Set(validShowtimes.map((s) => s.movieID))];
+
+      // Build moviesWithShowtimes using idToMovieMap
+      const moviesWithShowtimes = movieIds.map((movieID) => {
+        const movieData = idToMovieMap[movieID];
+        if (!movieData) {
+          console.warn(`Movie data not found for ID: ${movieID}`);
+          return null;
+        }
+
+        // Get showtimes for this movie
+        const showtimesForMovie = validShowtimes.filter(
+          (showtime) => showtime.movieID === movieID
+        );
+
+        return {
+          ...movieData,
+          showtimes: showtimesForMovie,
+        };
+      });
+
+      // Filter out any null entries
+      const validMoviesWithShowtimes = moviesWithShowtimes.filter(
+        (movie) => movie !== null
+      );
+
+      // Filter movies based on search query
+      const filteredMovies = validMoviesWithShowtimes.filter((movie) =>
+        movie.movieTitle.toLowerCase().includes(query.toLowerCase())
+      );
+
+      setFilteredMovies(filteredMovies);
+    } catch (error) {
+      console.error("Error fetching showtimes or movies:", error);
+    }
   };
 
   // Function to handle showtime button click
   const handleShowtimeClick = (theatre, movie, showtime) => {
     // Create the notification message
     const message = `You selected:
-Theatre: ${theatre.theatreName}
-Movie: ${movie.movieTitle}
-Date: ${showtime.date}
-Showtime: ${showtime.time}`;
+    Theatre: ${theatre.theatreName}
+    Movie: ${movie.movieTitle}
+    Date: ${showtime.date}
+    Showtime: ${showtime.time}`;
 
     // Set the notification state
     setNotification(message);
 
     // Delay navigation by 2 seconds to show the notification
     setTimeout(() => {
-      navigate(`/seat-booking/${showtime.theatreID}/${movie.movieID}/${showtime.showtimeID}`, {
-        state: {
-          theatre,
-          movie,
-          showtime,
-        },
-      });
-    }, 2000);
+      navigate(
+        `/seat-booking/${theatre.theatreID}/${movie.movieID}/${showtime.showtimeID}`,
+        {
+          state: {
+            theatre,
+            movie,
+            showtime,
+          },
+        }
+      );
+    }, 1000);
   };
-
-  useEffect(() => {
-    // Set default theater and tomorrow's date
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1); // Increment the current date by 1
-    const formattedTomorrow = tomorrow.toISOString().slice(0, 10); // Format it to YYYY-MM-DD
-  
-    setSelectedTheatre(theatres[0]?.theatreID || null); // Default to the first theater
-    setSelectedDate(formattedTomorrow); // Set tomorrow's date
-  
-    // Automatically apply search parameters
-    setSearchParams((prev) => ({
-      ...prev,
-      selectedTheatre: theatres[0]?.theatreID || null,
-      selectedDate: formattedTomorrow,
-    }));
-  }, []);
-
-  // Filter movies based on submitted search parameters
-  useEffect(() => {
-    const { query, selectedTheatre, selectedDate } = searchParams;
-
-    if (!selectedTheatre || !selectedDate) {
-      // Both dropdowns must be selected
-      setFilteredMovies([]);
-      return;
-    }
-
-    const results = allMovies.filter((movie) => {
-      // Filter by title
-      const matchesTitle = query
-        ? movie.movieTitle.toLowerCase().includes(query.toLowerCase())
-        : true; // If no query, include all movies
-
-      // Filter by theatre
-      const matchesTheatre = movie.showtimes.some(
-        (showtime) => showtime.theatreID === selectedTheatre
-      );
-
-      // Filter by date
-      const matchesDate = movie.showtimes.some(
-        (showtime) => showtime.date === selectedDate
-      );
-
-      // Return only if all conditions match
-      return matchesTitle && matchesTheatre && matchesDate;
-    });
-
-    setFilteredMovies(results);
-  }, [searchParams]);
 
   return (
     <Page background="light-3" fill>
@@ -222,8 +240,8 @@ Showtime: ${showtime.time}`;
 
         <PageHeader
           title={
-            searchParams.selectedTheatre && searchParams.selectedDate
-              ? `Search Results for "${searchParams.query}"`
+            selectedTheatre && selectedDate
+              ? `Search Results for "${query}"`
               : "Please select Theatre and Date"
           }
         />
@@ -241,40 +259,47 @@ Showtime: ${showtime.time}`;
             placeholder="Select a Theatre"
             value={selectedTheatre}
             onChange={({ value }) => setSelectedTheatre(value)}
-            style={{  flex: 1, width: size === "small" ? "80%" : "300px", minWidth: "150px", }}
-            
+            style={{
+              flex: 1,
+              width: size === "small" ? "80%" : "300px",
+              minWidth: "150px",
+            }}
           />
           {/* Date picker for selecting date */}
           <DateInput
-                format="yyyy-mm-dd"
-                value={selectedDate || undefined}
-                onChange={({ value: nextValue }) => {
-                    if (!nextValue) {
-                    setIsDatePickerOpen(false); // Close the date picker
-                    return;
-                    }
-                    const date = Array.isArray(nextValue) ? nextValue[0] : nextValue;
-                    const parsedDate = new Date(date);
-                    if (isNaN(parsedDate.getTime())) {
-                    setIsDatePickerOpen(false); // Close the date picker
-                    return;
-                    }
-                    const formattedDate = parsedDate.toISOString().slice(0, 10);
-                    setSelectedDate(formattedDate);
-                    setIsDatePickerOpen(false); // Close the date picker after selecting a date
-                }}
-                onFocus={() => setIsDatePickerOpen(true)} // Open the date picker when input is focused
-                open={isDatePickerOpen}
-                calendarProps={{
-                    bounds: [
-                    new Date().toISOString().slice(0, 10),
-                    new Date(new Date().setMonth(new Date().getMonth() + 2))
-                        .toISOString()
-                        .slice(0, 10),
-                    ],
-                }}
-                style={{ flex: 1, width: size === "small" ? "80%" : "300px", minWidth: "150px" }}
-        />
+            format="yyyy-mm-dd"
+            value={selectedDate || undefined}
+            onChange={({ value: nextValue }) => {
+              if (!nextValue) {
+                setIsDatePickerOpen(false); // Close the date picker
+                return;
+              }
+              const date = Array.isArray(nextValue) ? nextValue[0] : nextValue;
+              const parsedDate = new Date(date);
+              if (isNaN(parsedDate.getTime())) {
+                setIsDatePickerOpen(false); // Close the date picker
+                return;
+              }
+              const formattedDate = formatDateToLocalISOString(parsedDate);
+              setSelectedDate(formattedDate);
+              setIsDatePickerOpen(false); // Close the date picker after selecting a date
+            }}
+            onFocus={() => setIsDatePickerOpen(true)} // Open the date picker when input is focused
+            open={isDatePickerOpen}
+            calendarProps={{
+              bounds: [
+                formatDateToLocalISOString(new Date()),
+                formatDateToLocalISOString(
+                  new Date(new Date().setMonth(new Date().getMonth() + 2))
+                ),
+              ],
+            }}
+            style={{
+              flex: 1,
+              width: size === "small" ? "80%" : "300px",
+              minWidth: "150px",
+            }}
+          />
         </Box>
         {/* Search Bar with Search Button */}
         <Box
@@ -283,7 +308,6 @@ Showtime: ${showtime.time}`;
           direction="row"
           align="center"
         >
-            
           <TextInput
             placeholder="Search for movies..."
             value={query}
@@ -324,8 +348,8 @@ Showtime: ${showtime.time}`;
                       {movie.movieTitle}
                     </Text>
                     <Text size="small">
-                      Rating: {movie.rating} | Duration: {movie.duration} | Genre:{" "}
-                      {movie.genre}
+                      Rating: {movie.rate} | Duration: {movie.duration} | Genre:{" "}
+                      {movie.movieGenre}
                     </Text>
                     <Box
                       direction="row"
@@ -333,38 +357,26 @@ Showtime: ${showtime.time}`;
                       wrap
                       margin={{ top: "small" }}
                     >
-                      {movie.showtimes
-                        .filter(
-                          (showtime) =>
-                            showtime.theatreID === searchParams.selectedTheatre &&
-                            showtime.date === searchParams.selectedDate
-                        ).length > 0 ? (
-                        movie.showtimes
-                          .filter(
-                            (showtime) =>
-                              showtime.theatreID ===
-                                searchParams.selectedTheatre &&
-                              showtime.date === searchParams.selectedDate
-                          )
-                          .map((showtime) => (
-                            <Button
-                              key={showtime.showtimeID}
-                              label={`${showtime.time}`}
-                              primary
-                              color="brand"
-                              size="small"
-                              onClick={() =>
-                                handleShowtimeClick(
-                                  theatres.find(
-                                    (theatre) =>
-                                      theatre.theatreID === showtime.theatreID
-                                  ),
-                                  movie,
-                                  showtime
-                                )
-                              }
-                            />
-                          ))
+                      {movie.showtimes.length > 0 ? (
+                        movie.showtimes.map((showtime) => (
+                          <Button
+                            key={showtime.showtimeID}
+                            label={`${showtime.time}`}
+                            primary
+                            color="brand"
+                            size="small"
+                            onClick={() =>
+                              handleShowtimeClick(
+                                theatres.find(
+                                  (theatre) =>
+                                    theatre.theatreID === selectedTheatre
+                                ),
+                                movie,
+                                showtime
+                              )
+                            }
+                          />
+                        ))
                       ) : (
                         <Text>No showtimes available at this location</Text>
                       )}
@@ -380,9 +392,17 @@ Showtime: ${showtime.time}`;
           </Box>
         )}
         <Box
-          direction="row" gap="small" justify="center" margin={{ top: "medium" }}>
+          direction="row"
+          gap="small"
+          justify="center"
+          margin={{ top: "medium" }}
+        >
           <Button label="Go Back" onClick={() => window.history.back()} />
-          <Button label="Home" onClick={() => (window.location.href = "/")} primary/>
+          <Button
+            label="Home"
+            onClick={() => (window.location.href = "/")}
+            primary
+          />
         </Box>
       </Box>
     </Page>

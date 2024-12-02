@@ -1,6 +1,6 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
 import {
   Box,
   Button,
@@ -15,25 +15,16 @@ import {
   Select,
 } from "grommet";
 import { Close } from "grommet-icons";
+import { AuthContext } from "../context/AuthContext";
 
 const Profile = () => {
-  const navigate = useNavigate(); // For redirection
+  const navigate = useNavigate();
+  const size = useContext(ResponsiveContext);
+  const { userID } = useContext(AuthContext);
 
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "johndoe@example.com",
-    password: "********",
-    membershipFee: 20.0,
-    creditPoints: 100,
-    address: "123 Main Street, Calgary, AB",
-    paymentMethods: [
-      { type: "Credit", number: "1234123412341234", owner: "John Doe", expiry: "12/25", ccv: "123" },
-      { type: "Debit", number: "5678567856785678", owner: "Jane Doe", expiry: "08/26", ccv: "456" },
-    ],
-  });
-
+  const [user, setUser] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState(user);
+  const [formData, setFormData] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [currentPaymentIndex, setCurrentPaymentIndex] = useState(null);
   const [currentPayment, setCurrentPayment] = useState({
@@ -44,25 +35,74 @@ const Profile = () => {
     ccv: "",
   });
   const [notification, setNotification] = useState(null);
+  const [error, setError] = useState("");
 
-  const size = useContext(ResponsiveContext);
+  useEffect(() => {
+    if (!userID) {
+      navigate("/login");
+      return;
+    }
 
-  const handleEdit = () => {
-    setEditMode(true);
-  };
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8080/users/${userID}`);
+        const data = response.data;
+
+        const transformedData = {
+          ...data,
+          paymentMethods: data.paymentMethods.map((method) => ({
+            type: method.paymentType.charAt(0).toUpperCase() + method.paymentType.slice(1),
+            number: method.cardNum.toString(),
+            owner: method.cardOwner,
+            expiry: method.expiry,
+            ccv: method.ccv,
+          })),
+        };
+
+        setUser(transformedData);
+        setFormData(transformedData);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, [userID, navigate]);
+
+  const handleEdit = () => setEditMode(true);
 
   const handleCancel = () => {
     setEditMode(false);
     setFormData(user);
   };
 
-  const handleSave = () => {
-    setUser(formData);
-    setEditMode(false);
-    setNotification("Profile updated successfully!");
-    setTimeout(() => {
-      setNotification(null);
-    }, 3000);
+  const handleSave = async () => {
+    const updatedData = {
+      userID,
+      name: formData.name,
+      email: formData.email,
+      address: formData.address,
+      creditPoints: formData.creditPoints,
+      paymentMethods: formData.paymentMethods.map((method) => ({
+        cardOwner: method.owner,
+        cardNum: parseInt(method.number.replace(/\D/g, ""), 10), // Convert to number
+        ccv: parseInt(method.ccv, 10), // Ensure CCV is also numeric
+        expiry: method.expiry,
+        paymentType: method.type.toLowerCase(),
+      })),
+    };
+
+    try {
+      await axios.put(`http://localhost:8080/users/${userID}`, updatedData);
+      setUser(formData);
+      setEditMode(false);
+      setNotification("Profile updated successfully!");
+      setTimeout(() => setNotification(null), 3000);
+    } catch (error) {
+      console.error("Error updating profile:", error.response || error.message);
+      setNotification("Error updating profile. Please try again.");
+      setTimeout(() => setNotification(null), 3000);
+    }
   };
 
   const handleDeletePayment = (index) => {
@@ -83,23 +123,40 @@ const Profile = () => {
   };
 
   const handleSavePayment = () => {
-    const updatedPayments = [...formData.paymentMethods];
-    const maskedNumber = `****${currentPayment.number.slice(-4)}`; // Mask card number
-
-    if (currentPaymentIndex !== null) {
-      updatedPayments[currentPaymentIndex] = {
-        ...currentPayment,
-        number: maskedNumber,
-      };
-    } else {
-      updatedPayments.push({
-        ...currentPayment,
-        number: maskedNumber,
-      });
+    if (
+      !currentPayment.number ||
+      !currentPayment.owner ||
+      !currentPayment.expiry ||
+      !currentPayment.ccv ||
+      !currentPayment.type
+    ) {
+      setNotification("Please fill in all payment details.");
+      setTimeout(() => setNotification(null), 3000);
+      return;
     }
+
+    const newPayment = {
+      type: currentPayment.type,
+      number: currentPayment.number.replace(/\D/g, ""), // Ensure only digits
+      owner: currentPayment.owner,
+      expiry: currentPayment.expiry,
+      ccv: currentPayment.ccv,
+    };
+
+    const updatedPayments = [...formData.paymentMethods];
+    if (currentPaymentIndex !== null) {
+      updatedPayments[currentPaymentIndex] = newPayment; // Update existing payment
+    } else {
+      updatedPayments.push(newPayment); // Add new payment
+    }
+
     setFormData({ ...formData, paymentMethods: updatedPayments });
     setShowPaymentModal(false);
   };
+
+  if (!user) {
+    return <Text>Loading...</Text>;
+  }
 
   return (
     <Page background="light-3" fill>
@@ -123,198 +180,94 @@ const Profile = () => {
             background="status-ok"
           >
             <Text>{notification}</Text>
-            <Button
-              icon={<Close />}
-              onClick={() => setNotification(null)}
-              plain
-            />
+            <Button icon={<Close />} onClick={() => setNotification(null)} plain />
           </Box>
         </Layer>
       )}
-      <Box
-        fill
-        align="center"
-        justify={size === "small" ? "center" : "start"}
-        pad="medium"
-      >
-        <Box
-          width={size === "small" ? "90%" : "36%"}
-          pad="medium"
-          background="white"
-          elevation="small"
-          round="small"
-        >
+      <Box fill align="center" justify={size === "small" ? "center" : "start"} pad="medium">
+        <Box width={size === "small" ? "90%" : "36%"} pad="medium" background="white" elevation="small" round="small">
           <PageHeader title="Profile" alignSelf="start" />
           {editMode ? (
-            <>
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  handleSave();
-                }}
-              >
-                <FormField label="Name" name="name" required>
-                  <TextInput
-                    name="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
-                </FormField>
-                <FormField label="Email" name="email" required>
-                  <TextInput
-                    name="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
-                </FormField>
-                <FormField label="Password" name="password">
-                  <TextInput
-                    name="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                  />
-                </FormField>
-                <FormField label="Address" name="address">
-                  <TextInput
-                    name="address"
-                    value={formData.address}
-                    onChange={(e) =>
-                      setFormData({ ...formData, address: e.target.value })
-                    }
-                  />
-                </FormField>
-                <Box margin={{ bottom: "small" }}>
-                  <Text>
-                    <strong>Membership Fee:</strong> ${formData.membershipFee.toFixed(2)}
-                  </Text>
-                </Box>
-                <Box margin={{ bottom: "small" }}>
-                  <Text>
-                    <strong>Credit Points:</strong> {formData.creditPoints}
-                  </Text>
-                </Box>
-                <Box margin={{ top: "medium" }}>
-                  <Text weight="bold" margin={{ bottom: "small" }}>
-                    Payment Methods
-                  </Text>
-                  <Box gap="small">
-                    {formData.paymentMethods.map((method, index) => (
-                      <Box
-                        key={index}
-                        direction="row"
-                        justify="between"
-                        align="center"
-                      >
-                        <Text>
-                          {method.type} ****{method.number.slice(-4)}
-                        </Text>
-                        <Box direction="row" gap="small">
-                          <Button
-                            label="Edit"
-                            onClick={() => handleEditPayment(method, index)}
-                            size="small"
-                          />
-                          <Button
-                            label="Delete"
-                            onClick={() => handleDeletePayment(index)}
-                            size="small"
-                            color="status-critical"
-                          />
-                        </Box>
-                      </Box>
-                    ))}
-                    <Button
-                      label="Add Payment Method"
-                      onClick={handleAddPayment}
-                      size="small"
-                      primary
-                    />
+            <Form
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleSave();
+              }}
+            >
+              <FormField label="Name" name="name" required>
+                <TextInput
+                  name="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </FormField>
+              <FormField label="Email" name="email" required>
+                <TextInput
+                  name="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+              </FormField>
+              <FormField label="Address" name="address">
+                <TextInput
+                  name="address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                />
+              </FormField>
+              <Box margin={{ bottom: "small" }}>
+                <Text>
+                  <strong>Credit Points:</strong> {formData.creditPoints}
+                </Text>
+              </Box>
+              <Box margin={{ top: "medium" }}>
+                <Text weight="bold" margin={{ bottom: "small" }}>
+                  Payment Methods
+                </Text>
+                {formData.paymentMethods.map((method, index) => (
+                  <Box key={index} direction="row" justify="between" align="center">
+                    <Text>
+                      {method.type} ****{method.number.slice(-4)}
+                    </Text>
+                    <Box direction="row" gap="small">
+                      <Button label="Edit" onClick={() => handleEditPayment(method, index)} size="small" />
+                      <Button label="Delete" onClick={() => handleDeletePayment(index)} size="small" color="status-critical" />
+                    </Box>
                   </Box>
-                </Box>
-                <Box
-                  direction="row"
-                  gap="medium"
-                  justify="center"
-                  margin={{ top: "medium" }}
-                >
-                  <Button type="submit" label="Save" primary />
-                  <Button label="Cancel" onClick={handleCancel} />
-                </Box>
-              </Form>
-            </>
+                ))}
+                <Button label="Add Payment Method" onClick={handleAddPayment} size="small" primary />
+              </Box>
+              <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
+                <Button type="submit" label="Save" primary />
+                <Button label="Cancel" onClick={handleCancel} />
+              </Box>
+            </Form>
           ) : (
             <>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Name:</strong> {user.name}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Email:</strong> {user.email}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Password:</strong> {user.password}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Address:</strong> {user.address}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Membership Fee:</strong> ${user.membershipFee.toFixed(2)}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Credit Points:</strong> {user.creditPoints}
-              </Text>
-              <Text margin={{ bottom: "small" }}>
-                <strong>Payment Methods:</strong>
-                <ul>
-                  {user.paymentMethods.map((method, index) => (
-                    <li key={index}>
-                      {method.type} ****{method.number.slice(-4)}
-                    </li>
-                  ))}
-                </ul>
-              </Text>
-              <Box
-  direction="row"
-  gap="medium"
-  justify="center"
-  margin={{ top: "medium" }}
->
-  {/* View Tickets Button */}
-  <Button
-    type="button"
-    label="View Tickets"
-    onClick={() => {
-      navigate("/tickets");
-    }}
-  />
-  {/* Payment History Button */}
-  <Button
-    type="button"
-    label="Payment History"
-    onClick={() => {
-      navigate("/payments");
-    }}
-  />
-  {/* Edit Profile Button */}
-  <Button
-    type="button"
-    label="Edit Profile"
-    primary
-    onClick={handleEdit}
-  />
-</Box>
+              <Text><strong>Name:</strong> {user.name}</Text>
+              <Text><strong>Email:</strong> {user.email}</Text>
+              <Text><strong>Address:</strong> {user.address}</Text>
+              <Text><strong>Credit Points:</strong> {user.creditPoints}</Text>
+              <Box margin={{ top: "medium" }}>
+                <Text weight="bold" margin={{ bottom: "small" }}>
+                  Payment Methods
+                </Text>
+                {user.paymentMethods.map((method, index) => (
+                  <Text key={index}>
+                    {method.type} ****{method.number.slice(-4)}
+                  </Text>
+                ))}
+              </Box>
+              <Box direction="row" gap="small" margin={{ top: "medium" }} justify="center">
+                <Button label="Edit Profile" onClick={handleEdit} primary />
+                <Button label="View Tickets" onClick={() => navigate("/tickets")} />
+                <Button label="View Payments" onClick={() => navigate("/payments")} />
+              </Box>
             </>
           )}
         </Box>
       </Box>
 
-      {/* Payment Modal */}
       {showPaymentModal && (
         <Layer
           onEsc={() => setShowPaymentModal(false)}
@@ -350,7 +303,7 @@ const Profile = () => {
               <FormField label="Card Number" name="number" required>
                 <TextInput
                   name="number"
-                  placeholder="****1234"
+                  placeholder="1234567812345678"
                   value={currentPayment.number}
                   onChange={(e) =>
                     setCurrentPayment({ ...currentPayment, number: e.target.value })
@@ -380,10 +333,7 @@ const Profile = () => {
               </FormField>
               <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
                 <Button type="submit" label="Save" primary />
-                <Button
-                  label="Cancel"
-                  onClick={() => setShowPaymentModal(false)}
-                />
+                <Button label="Cancel" onClick={() => setShowPaymentModal(false)} />
               </Box>
             </Form>
           </Box>

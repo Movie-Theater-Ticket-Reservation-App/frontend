@@ -11,30 +11,25 @@ import {
   TextInput,
   Select,
   ResponsiveContext,
+  CheckBox,
 } from "grommet";
 import { AuthContext } from "../context/AuthContext";
-import { NotificationsContext } from "../context/NotificationsContext"; // Import NotificationsContext
+import { NotificationsContext } from "../context/NotificationsContext";
 
 const MakePayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const size = useContext(ResponsiveContext); // Detect screen size
-  const { userID } = useContext(AuthContext); // Get the userID from AuthContext
-  const { fetchNotifications } = useContext(NotificationsContext); // Get fetchNotifications
+  const size = useContext(ResponsiveContext);
+  const { userID } = useContext(AuthContext);
+  const { fetchNotifications } = useContext(NotificationsContext);
 
   let userIdValue = parseInt(userID, 10);
-
   if (isNaN(userIdValue)) {
-    userIdValue = 0; // Assign 0 if userID is NaN
+    userIdValue = 0;
   }
 
-  // State for email
   const [email, setEmail] = useState("");
-
-  // Retrieve booking details from location.state
   const { theatre, movie, showtime, selectedSeats } = location.state || {};
-
-  // Initialize state hooks
   const [formData, setFormData] = useState({
     selectedPaymentMethod: null,
     paymentType: "",
@@ -42,17 +37,15 @@ const MakePayment = () => {
     cardNumber: "",
     expiryDate: "",
     ccv: "",
-    useCreditPoints: "No",
+    useCreditPoints: false,
   });
-
-  const [creditPoints] = useState(0); // Mock credit points balance
-  const [redeemPoints, setRedeemPoints] = useState(0); // Points used to redeem
+  const [savedPaymentMethods, setSavedPaymentMethods] = useState([]);
+  const [creditPoints, setCreditPoints] = useState(0);
+  const [redeemPoints, setRedeemPoints] = useState(0);
   const [error, setError] = useState("");
 
-  // Fetch user email if userID is present
   useEffect(() => {
     if (userIdValue > 0) {
-      // Fetch user profile
       const fetchUserProfile = async () => {
         try {
           const response = await fetch(`http://localhost:8080/users/${userIdValue}`);
@@ -61,6 +54,13 @@ const MakePayment = () => {
           }
           const userProfile = await response.json();
           setEmail(userProfile.email);
+          setSavedPaymentMethods(
+            userProfile.paymentMethods.map((method) => ({
+              ...method,
+              cardNum: method.cardNum.toString(),
+            }))
+          );
+          setCreditPoints(userProfile.creditPoints || 0);
         } catch (error) {
           console.error("Error fetching user profile:", error);
           setError("An error occurred while fetching user information.");
@@ -71,7 +71,6 @@ const MakePayment = () => {
     }
   }, [userIdValue]);
 
-  // Check if booking details are available
   if (!theatre || !movie || !showtime || !selectedSeats) {
     return (
       <Box align="center" pad="large">
@@ -82,41 +81,20 @@ const MakePayment = () => {
     );
   }
 
-  // Mock saved payment methods
-  const savedPaymentMethods = [
-    {
-      id: 1,
-      type: "Credit",
-      owner: "John Smith",
-      number: "****8123",
-      expiryDate: "12/25",
-      ccv: "123",
-    },
-    {
-      id: 2,
-      type: "Debit",
-      owner: "Jane Doe",
-      number: "****4567",
-      expiryDate: "05/24",
-      ccv: "456",
-    },
-  ];
-
-  // Update calculations based on selectedSeats
-  const ticketPrice = 20.0; // Price per ticket
+  const ticketPrice = 20.0;
   const numberOfTickets = selectedSeats.length;
   const subtotal = ticketPrice * numberOfTickets;
-  const tax = subtotal * 0.05; // Assuming 5% tax
-  const pointsValue = redeemPoints * 0.01; // Convert points to dollar value
+  const tax = subtotal * 0.05;
+  const pointsValue = redeemPoints * 0.01;
   const totalAmount = Math.max(0, subtotal + tax - pointsValue);
 
-  const handleCreditPointSelection = (option) => {
+  const handleCreditPointSelection = (checked) => {
     setFormData((prevState) => ({
       ...prevState,
-      useCreditPoints: option,
+      useCreditPoints: checked,
     }));
     setRedeemPoints(
-      option === "Yes" ? Math.min(creditPoints, Math.ceil((subtotal + tax) / 0.01)) : 0
+      checked ? Math.min(creditPoints, Math.floor((subtotal + tax) * 100)) : 0
     );
   };
 
@@ -126,10 +104,10 @@ const MakePayment = () => {
       setFormData({
         ...formData,
         selectedPaymentMethod: option.id,
-        paymentType: selectedMethod.type,
-        owner: selectedMethod.owner,
-        cardNumber: selectedMethod.number,
-        expiryDate: selectedMethod.expiryDate,
+        paymentType: selectedMethod.paymentType,
+        owner: selectedMethod.cardOwner,
+        cardNumber: selectedMethod.cardNum,
+        expiryDate: selectedMethod.expiry,
         ccv: selectedMethod.ccv,
       });
     }
@@ -138,7 +116,6 @@ const MakePayment = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Validation
     if (
       !formData.paymentType ||
       !formData.cardNumber ||
@@ -157,12 +134,10 @@ const MakePayment = () => {
     setError("");
 
     try {
-      const ticketDetails = []; // Array to store ticket details
-      const totalAmountPerTicket = ticketPrice * (1 + 0.05); // Include tax (5%)
+      const ticketDetails = [];
+      const totalAmountPerTicket = ticketPrice * (1 + 0.05);
 
-      // For each seat, process payment and create ticket
       for (const seat of selectedSeats) {
-        // Prepare payment data for one ticket
         const paymentData = {
           paymentType: formData.paymentType.toLowerCase(),
           amount: totalAmountPerTicket,
@@ -173,11 +148,6 @@ const MakePayment = () => {
           email: email,
         };
 
-        // Log payment data
-        console.log("Processing payment for seat:", seat.seatNumber || seat);
-        console.log("Payment Data Being Sent:", JSON.stringify(paymentData));
-
-        // Process Payment
         const paymentResponse = await fetch("http://localhost:8080/payments/", {
           method: "POST",
           headers: {
@@ -188,27 +158,20 @@ const MakePayment = () => {
 
         if (!paymentResponse.ok) {
           const errorText = await paymentResponse.text();
-          console.error("Payment processing failed:", errorText);
-          throw new Error("Payment processing failed");
+          throw new Error(`Payment processing failed: ${errorText}`);
         }
 
         const paymentResult = await paymentResponse.json();
-        console.log("Payment successful:", paymentResult);
 
-        const { paymentID, user: newUserID } = paymentResult;
-
-        // Proceed with ticket creation
         const ticketData = {
           showtimeID: showtime.showtimeID,
-          seatNumber: seat.seatNumber || seat,
+          seatNumber: seat,
           theatreID: theatre.theatreID,
-          userID: newUserID,
-          date: `${showtime.date} ${showtime.time}`, // Include date and time
-          paymentID: paymentID,
+          userID: paymentResult.user,
+          date: `${showtime.date} ${showtime.time}`,
+          paymentID: paymentResult.paymentID,
           ticketStatus: "booked",
         };
-
-        console.log("Creating ticket with data:", JSON.stringify(ticketData));
 
         const ticketResponse = await fetch("http://localhost:8080/tickets/", {
           method: "POST",
@@ -220,14 +183,10 @@ const MakePayment = () => {
 
         if (!ticketResponse.ok) {
           const errorText = await ticketResponse.text();
-          console.error("Ticket creation failed:", errorText);
-          throw new Error("Ticket creation failed");
+          throw new Error(`Ticket creation failed: ${errorText}`);
         }
 
         const ticketResult = await ticketResponse.json();
-        console.log("Ticket created:", ticketResult);
-
-        // Collect ticket details for display
         ticketDetails.push({
           ticketID: ticketResult.ticketID,
           movieName: movie.movieTitle,
@@ -237,34 +196,31 @@ const MakePayment = () => {
         });
       }
 
-      // Send notification to registered user
+      if (formData.useCreditPoints && redeemPoints > 0) {
+        await fetch(`http://localhost:8080/users/${userIdValue}/update-credits`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ creditPoints: creditPoints - redeemPoints }),
+        });
+      }
+
       if (userIdValue > 0) {
         const notificationData = {
           userID: userIdValue,
           message: `Successfully booked tickets for ${movie.movieTitle}!`,
         };
 
-        try {
-          const notificationResponse = await fetch(`http://localhost:8080/notifications/`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(notificationData),
-          });
+        await fetch("http://localhost:8080/notifications/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(notificationData),
+        });
 
-          if (notificationResponse.ok) {
-            // Refresh notifications
-            fetchNotifications();
-          } else {
-            console.error("Error sending notification");
-          }
-        } catch (error) {
-          console.error("Error sending notification:", error);
-        }
+        fetchNotifications();
       }
 
-      // Navigate to the success page with ticket details
       navigate("/successful", { state: { ticketDetails } });
     } catch (error) {
       console.error("Error during payment and ticket creation:", error);
@@ -287,7 +243,7 @@ const MakePayment = () => {
           background="white"
           elevation="small"
           round="small"
-          flex={false} // Prevents the Box from shrinking
+          flex={false}
         >
           <PageHeader title="Process Payment" alignSelf="start" />
           {error && (
@@ -296,113 +252,106 @@ const MakePayment = () => {
             </Text>
           )}
 
-          {/* Payment Form Fields */}
-          <Form onSubmit={handleSubmit}>
-            {/* Email Field for Guest Users */}
-            {userIdValue === 0 && (
-              <FormField label="Email" name="email" required>
-                <TextInput
-                  name="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                />
-              </FormField>
-            )}
-            {savedPaymentMethods.length > 0 && (
-              <FormField label="Saved Payment Methods" name="savedPaymentMethods">
-                <Select
-                  name="savedPaymentMethods"
-                  options={savedPaymentMethods.map((method) => ({
-                    id: method.id,
-                    label: `${method.type} ${method.number}`,
-                  }))}
-                  labelKey="label"
-                  valueKey="id"
-                  value={formData.selectedPaymentMethod}
-                  onChange={({ option }) => handlePaymentMethodSelection(option)}
-                />
-              </FormField>
-            )}
-            {creditPoints > 0 && (
-              <FormField
-                label={`Use Credit Points (Available: ${creditPoints})`}
-                name="useCreditPoints"
-              >
-                <Select
-                  name="useCreditPoints"
-                  options={["Yes", "No"]}
-                  value={formData.useCreditPoints}
-                  onChange={({ option }) => handleCreditPointSelection(option)}
-                />
-              </FormField>
-            )}
-            <FormField label="Payment Type" name="paymentType" required>
-              <Select
-                name="paymentType"
-                options={["Credit", "Debit"]}
-                value={formData.paymentType}
-                onChange={({ option }) =>
-                  setFormData({ ...formData, paymentType: option })
-                }
-              />
-            </FormField>
-            <FormField label="Card Owner" name="owner" required>
-              <TextInput
-                name="owner"
-                placeholder="John Smith"
-                value={formData.owner}
-                onChange={(event) =>
-                  setFormData({ ...formData, owner: event.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="Card Number" name="cardNumber" required>
-              <TextInput
-                name="cardNumber"
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-                value={formData.cardNumber}
-                onChange={(event) =>
-                  setFormData({ ...formData, cardNumber: event.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="Expiry Date (MM/YY)" name="expiryDate" required>
-              <TextInput
-                name="expiryDate"
-                placeholder="MM/YY"
-                value={formData.expiryDate}
-                onChange={(event) =>
-                  setFormData({ ...formData, expiryDate: event.target.value })
-                }
-              />
-            </FormField>
-            <FormField label="CVV" name="ccv" required>
-              <TextInput
-                name="ccv"
-                placeholder="XXX"
-                value={formData.ccv}
-                onChange={(event) =>
-                  setFormData({ ...formData, ccv: event.target.value })
-                }
-              />
-            </FormField>
-            <Box
-              direction="row"
-              gap="medium"
-              justify="center"
-              margin={{ top: "medium" }}
-            >
-              <Button type="submit" label="Pay" primary />
-              <Button
-                label="Cancel"
-                onClick={() => navigate("/")}
-                secondary
-              />
-            </Box>
-          </Form>
+<Form onSubmit={handleSubmit}>
+  {userIdValue === 0 && (
+    <FormField label="Email" name="email" required>
+      <TextInput
+        name="email"
+        placeholder="Enter your email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+      />
+    </FormField>
+  )}
+  {savedPaymentMethods.length > 0 && (
+    <FormField label="Saved Payment Methods" name="savedPaymentMethods">
+      <Select
+        name="savedPaymentMethods"
+        options={[
+          { id: null, label: "None" },
+          ...savedPaymentMethods.map((method) => ({
+            id: method.id,
+            label: `${method.paymentType} ****${method.cardNum.slice(-4)}`,
+          })),
+        ]}
+        labelKey="label"
+        valueKey="id"
+        value={formData.selectedPaymentMethod}
+        onChange={({ option }) => handlePaymentMethodSelection(option)}
+      />
+    </FormField>
+  )}
+  <FormField label="Payment Type" name="paymentType" required>
+    <Select
+      name="paymentType"
+      options={["Credit", "Debit"]}
+      value={formData.paymentType}
+      onChange={({ option }) =>
+        setFormData({ ...formData, paymentType: option })
+      }
+    />
+  </FormField>
+  <FormField label="Card Owner" name="owner" required>
+    <TextInput
+      name="owner"
+      placeholder="John Smith"
+      value={formData.owner}
+      onChange={(event) =>
+        setFormData({ ...formData, owner: event.target.value })
+      }
+    />
+  </FormField>
+  <FormField label="Card Number" name="cardNumber" required>
+    <TextInput
+      name="cardNumber"
+      placeholder="XXXX-XXXX-XXXX-XXXX"
+      value={formData.cardNumber}
+      onChange={(event) =>
+        setFormData({ ...formData, cardNumber: event.target.value })
+      }
+    />
+  </FormField>
+  <FormField label="Expiry Date (MM/YY)" name="expiryDate" required>
+    <TextInput
+      name="expiryDate"
+      placeholder="MM/YY"
+      value={formData.expiryDate}
+      onChange={(event) =>
+        setFormData({ ...formData, expiryDate: event.target.value })
+      }
+    />
+  </FormField>
+  <FormField label="CVV" name="ccv" required>
+    <TextInput
+      name="ccv"
+      placeholder="XXX"
+      value={formData.ccv}
+      onChange={(event) =>
+        setFormData({ ...formData, ccv: event.target.value })
+      }
+    />
+  </FormField>
+  {creditPoints > 0 && (
+    <FormField>
+      <CheckBox
+        label={`Use Credit Points (${creditPoints} available)`}
+        checked={formData.useCreditPoints}
+        onChange={(event) =>
+          handleCreditPointSelection(event.target.checked)
+        }
+      />
+    </FormField>
+  )}
+  <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
+    <Button type="submit" label="Pay" primary />
+    <Button
+      label="Cancel"
+      onClick={() => navigate("/")}
+      secondary
+    />
+  </Box>
+</Form>
 
-          {/* Calculation Section at the Bottom */}
           <Box margin={{ top: "small" }} align="center">
             <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
               <Text>Number of Tickets:</Text>
@@ -418,9 +367,11 @@ const MakePayment = () => {
               <Text>Tax (5%):</Text>
               <Text>${tax.toFixed(2)}</Text>
             </Box>
-            {formData.useCreditPoints === "Yes" && (
+            {redeemPoints > 0 && (
               <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
-                <Text>Redeem Points ({redeemPoints}):</Text>
+                <Text>
+                  Credits Used ({redeemPoints} points):
+                </Text>
                 <Text>- ${pointsValue.toFixed(2)}</Text>
               </Box>
             )}

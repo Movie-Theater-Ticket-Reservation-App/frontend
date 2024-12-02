@@ -35,7 +35,7 @@ const Profile = () => {
     ccv: "",
   });
   const [notification, setNotification] = useState(null);
-  const [error, setError] = useState("");
+  // const [error, setError] = useState("");
 
   useEffect(() => {
     if (!userID) {
@@ -215,11 +215,7 @@ const Profile = () => {
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
               </FormField>
-              <Box margin={{ bottom: "small" }}>
-                <Text>
-                  <strong>Credit Points:</strong> {formData.creditPoints}
-                </Text>
-              </Box>
+              
               <Box margin={{ top: "medium" }}>
                 <Text weight="bold" margin={{ bottom: "small" }}>
                   Payment Methods
@@ -247,7 +243,6 @@ const Profile = () => {
               <Text><strong>Name:</strong> {user.name}</Text>
               <Text><strong>Email:</strong> {user.email}</Text>
               <Text><strong>Address:</strong> {user.address}</Text>
-              <Text><strong>Credit Points:</strong> {user.creditPoints}</Text>
               <Box margin={{ top: "medium" }}>
                 <Text weight="bold" margin={{ bottom: "small" }}>
                   Payment Methods

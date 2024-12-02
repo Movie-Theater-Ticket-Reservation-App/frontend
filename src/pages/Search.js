@@ -26,14 +26,6 @@ const Search = () => {
 
   const { userID } = useContext(AuthContext);
 
-  // Function to format date to 'yyyy-mm-dd' in local time
-  const formatDateToLocalISOString = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
   // Extract search query from URL parameters
   const queryParams = new URLSearchParams(location.search);
   const initialQuery = queryParams.get("query") || "";
@@ -59,6 +51,17 @@ const Search = () => {
   // State for notification
   const [notification, setNotification] = useState(null);
 
+  // State to track if search has been performed
+  const [hasSearched, setHasSearched] = useState(false);
+
+  // Function to format Date object to 'YYYY-MM-DD'
+  const getFormattedDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   // Fetch theatres when the component mounts
   useEffect(() => {
     const fetchTheatres = async () => {
@@ -66,6 +69,7 @@ const Search = () => {
         const response = await fetch("http://localhost:8080/theatres/");
         const data = await response.json();
         setTheatres(data);
+        console.log("Fetched Theatres:", data);
       } catch (error) {
         console.error("Error fetching theatres:", error);
       }
@@ -80,6 +84,7 @@ const Search = () => {
         const response = await fetch("http://localhost:8080/movies/");
         const data = await response.json();
         setAllMovies(data);
+        console.log("Fetched Movies:", data);
 
         // Create title-to-ID mapping and ID-to-movie mapping
         const titleIdMap = {};
@@ -90,6 +95,8 @@ const Search = () => {
         });
         setTitleToIdMap(titleIdMap);
         setIdToMovieMap(idMovieMap);
+        console.log("Title to ID Map:", titleIdMap);
+        console.log("ID to Movie Map:", idMovieMap);
       } catch (error) {
         console.error("Error fetching movies:", error);
       }
@@ -100,10 +107,11 @@ const Search = () => {
   // Set default date if not already set
   useEffect(() => {
     if (!selectedDate) {
-      // Set default date to today using local time
+      // Set default date to today
       const today = new Date();
-      const formattedToday = formatDateToLocalISOString(today);
+      const formattedToday = getFormattedDate(today);
       setSelectedDate(formattedToday);
+      console.log("Default selectedDate set to:", formattedToday);
     }
   }, [selectedDate]);
 
@@ -114,17 +122,30 @@ const Search = () => {
       return;
     }
 
+    console.log("Starting search with parameters:");
+    console.log("Selected Theatre ID:", selectedTheatre);
+    console.log("Selected Date:", selectedDate);
+    console.log("Query:", query);
+
     try {
       // Fetch showtimes for the selected theatre
       const response = await fetch(
         `http://localhost:8080/theatres/${selectedTheatre}/showtimes`
       );
       const showtimesData = await response.json();
+      console.log("Showtimes Data:", showtimesData);
 
       // Filter showtimes by selected date
-      const filteredShowtimes = showtimesData.filter(
-        (showtime) => showtime.date === selectedDate
-      );
+      const filteredShowtimes = showtimesData.filter((showtime) => {
+        console.log(
+          "Comparing showtime date:",
+          showtime.date,
+          "with selected date:",
+          selectedDate
+        );
+        return showtime.date === selectedDate;
+      });
+      console.log("Filtered Showtimes:", filteredShowtimes);
 
       // Add movieID to each showtime using the titleToIdMap
       const showtimesWithIds = filteredShowtimes.map((showtime) => {
@@ -134,14 +155,17 @@ const Search = () => {
         }
         return { ...showtime, movieID };
       });
+      console.log("Showtimes with Movie IDs:", showtimesWithIds);
 
       // Filter out showtimes where movieID was not found
       const validShowtimes = showtimesWithIds.filter(
         (showtime) => showtime.movieID !== undefined
       );
+      console.log("Valid Showtimes:", validShowtimes);
 
       // Get unique movieIDs from the valid showtimes
       const movieIds = [...new Set(validShowtimes.map((s) => s.movieID))];
+      console.log("Unique Movie IDs:", movieIds);
 
       // Build moviesWithShowtimes using idToMovieMap
       const moviesWithShowtimes = movieIds.map((movieID) => {
@@ -161,11 +185,13 @@ const Search = () => {
           showtimes: showtimesForMovie,
         };
       });
+      console.log("Movies with Showtimes:", moviesWithShowtimes);
 
       // Filter out any null entries
       const validMoviesWithShowtimes = moviesWithShowtimes.filter(
         (movie) => movie !== null
       );
+      console.log("Valid Movies with Showtimes:", validMoviesWithShowtimes);
 
       // Filter movies based on search query and release date
       const filteredMovies = validMoviesWithShowtimes.filter((movie) => {
@@ -191,8 +217,10 @@ const Search = () => {
 
         return matchesQuery && includeMovie;
       });
+      console.log("Filtered Movies:", filteredMovies);
 
       setFilteredMovies(filteredMovies);
+      setHasSearched(true); // Set hasSearched to true after searching
     } catch (error) {
       console.error("Error fetching showtimes or movies:", error);
     }
@@ -267,9 +295,11 @@ const Search = () => {
 
           <PageHeader
             title={
-              selectedTheatre && selectedDate
+              !selectedTheatre || !selectedDate || query.trim() === ""
+                ? "Please fill in all fields to search"
+                : hasSearched
                 ? `Search Results for "${query}"`
-                : "Please fill in all fields to search"
+                : "Click search"
             }
           />
           <Box
@@ -288,7 +318,11 @@ const Search = () => {
                 valueKey={{ key: "theatreID", reduce: true }}
                 placeholder="Select a Theatre"
                 value={selectedTheatre}
-                onChange={({ value }) => setSelectedTheatre(value)}
+                onChange={({ value }) => {
+                  console.log("Selected Theatre:", value);
+                  setSelectedTheatre(value);
+                  setHasSearched(false); // Reset hasSearched when inputs change
+                }}
               />
             </Box>
             {/* Date picker for selecting date */}
@@ -297,15 +331,29 @@ const Search = () => {
                 format="yyyy-mm-dd"
                 value={selectedDate}
                 onChange={({ value: nextValue }) => {
-                  setSelectedDate(nextValue);
+                  console.log("DateInput value:", nextValue);
+                  let dateValue;
+                  if (Array.isArray(nextValue)) {
+                    dateValue = nextValue[0];
+                  } else {
+                    dateValue = nextValue;
+                  }
+                  if (typeof dateValue === "string") {
+                    // Extract date part in case time is included
+                    dateValue = dateValue.split("T")[0];
+                  }
+                  console.log("Formatted selectedDate:", dateValue);
+                  setSelectedDate(dateValue);
+                  setHasSearched(false); // Reset hasSearched when inputs change
                 }}
                 calendarProps={{
                   bounds: [
-                    formatDateToLocalISOString(new Date()),
-                    formatDateToLocalISOString(
+                    getFormattedDate(new Date()),
+                    getFormattedDate(
                       new Date(new Date().setMonth(new Date().getMonth() + 2))
                     ),
                   ],
+                  range: false, // Disable date range selection
                 }}
               />
             </Box>
@@ -320,17 +368,23 @@ const Search = () => {
             <TextInput
               placeholder="Search for movies..."
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                console.log("Query input:", event.target.value);
+                setQuery(event.target.value);
+                setHasSearched(false); // Reset hasSearched when inputs change
+              }}
               style={{ fontSize: "16px", padding: "10px", flex: 1 }}
             />
             <Button
               label="Search"
               onClick={handleSearch}
               margin={{ left: "small" }}
-              disabled={!selectedTheatre || !selectedDate || query.trim() === ""}
+              disabled={
+                !selectedTheatre || !selectedDate || query.trim() === ""
+              }
             />
           </Box>
-          {filteredMovies.length > 0 ? (
+          {hasSearched && filteredMovies.length > 0 ? (
             <Box width="100%" margin={{ top: "medium" }}>
               <Grid
                 columns={
@@ -419,9 +473,11 @@ const Search = () => {
               </Grid>
             </Box>
           ) : (
-            <Box pad="medium" align="center">
-              <Text>No results found for your search.</Text>
-            </Box>
+            hasSearched && (
+              <Box pad="medium" align="center">
+                <Text>No results found for your search.</Text>
+              </Box>
+            )
           )}
         </Box>
         <Box

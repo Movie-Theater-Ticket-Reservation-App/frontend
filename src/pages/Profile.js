@@ -35,6 +35,7 @@ const Profile = () => {
     ccv: "",
   });
   const [notification, setNotification] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!userID) {

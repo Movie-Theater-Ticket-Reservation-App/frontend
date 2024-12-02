@@ -241,7 +241,7 @@ const MakePayment = () => {
       if (userIdValue > 0) {
         const notificationData = {
           userID: userIdValue,
-          message: `You have successfully booked tickets for ${movie.movieTitle}!`,
+          message: `Successfully booked tickets for ${movie.movieTitle}!`,
         };
 
         try {

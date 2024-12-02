@@ -9,8 +9,10 @@ const SeatBookingPage = () => {
 
   const [seatsData, setSeatsData] = useState([]);
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [totalSeats, setTotalSeats] = useState(0);
+  const [maxAllowedSeats, setMaxAllowedSeats] = useState(null);
 
-  // Fetch seats data when the component mounts
+  // Fetch seats data and calculate the total seats
   useEffect(() => {
     const fetchSeats = async () => {
       if (!showtime || !showtime.showtimeID) return; // Ensure showtimeID is available
@@ -20,6 +22,7 @@ const SeatBookingPage = () => {
         );
         const data = await response.json();
         setSeatsData(data);
+        setTotalSeats(data.length); // Total seats available in the showtime
       } catch (error) {
         console.error("Error fetching seats data:", error);
       }
@@ -27,6 +30,63 @@ const SeatBookingPage = () => {
 
     fetchSeats();
   }, [showtime]);
+
+  // Fetch movie data and determine if seat limit applies
+  useEffect(() => {
+    const fetchMovieDetails = async () => {
+      try {
+        const response = await fetch("http://localhost:8080/movies/");
+        const movies = await response.json();
+
+        const currentMovie = movies.find((m) => m.movieID === movie.movieID);
+        if (currentMovie) {
+          const releaseDate = new Date(currentMovie.releaseDate);
+          const today = new Date();
+          if (releaseDate > today) {
+            // Count the already booked or reserved seats
+            const alreadyBookedSeats = seatsData.filter(
+              (seat) => seat.status !== "available"
+            ).length;
+
+            // Calculate maximum allowed seats
+            const maxSeats = Math.ceil(totalSeats * 0.1) - alreadyBookedSeats;
+
+            setMaxAllowedSeats(maxSeats > 0 ? maxSeats : 0); // Ensure the limit is not negative
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching movie details:", error);
+      }
+    };
+
+    if (movie && movie.movieID && totalSeats > 0) {
+      fetchMovieDetails();
+    }
+  }, [movie, totalSeats, seatsData]);
+
+  const toggleSeat = (seatNumber) => {
+    const seat = seatsData.find((s) => s.seatNumber === seatNumber);
+    if (!seat || seat.status !== "available") return; // Prevent selecting unavailable seats
+
+    if (
+      maxAllowedSeats &&
+      selectedSeats.length >= maxAllowedSeats &&
+      !selectedSeats.includes(seatNumber)
+    ) {
+      alert(
+        `Maximum seat selection limit of 10% has been reached for this movie.`
+      );
+      return;
+    }
+
+    setSelectedSeats((prevSelectedSeats) => {
+      if (prevSelectedSeats.includes(seatNumber)) {
+        return prevSelectedSeats.filter((num) => num !== seatNumber);
+      } else {
+        return [...prevSelectedSeats, seatNumber];
+      }
+    });
+  };
 
   // Conditional rendering inside the return statement
   if (!theatre || !movie || !showtime) {
@@ -64,19 +124,6 @@ const SeatBookingPage = () => {
       rowIndex++;
     }
   });
-
-  const toggleSeat = (seatNumber) => {
-    const seat = seatsData.find((s) => s.seatNumber === seatNumber);
-    if (!seat || seat.status !== "available") return; // Prevent selecting unavailable seats
-
-    setSelectedSeats((prevSelectedSeats) => {
-      if (prevSelectedSeats.includes(seatNumber)) {
-        return prevSelectedSeats.filter((num) => num !== seatNumber);
-      } else {
-        return [...prevSelectedSeats, seatNumber];
-      }
-    });
-  };
 
   return (
     <Box

@@ -1,70 +1,121 @@
-# Getting Started with Create React App
+# AcmePlex Movie Theatre Reservation Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Welcome to the **AcmePlex Movie Theatre Reservation** frontend application! This is a React-based web application that allows users to browse movies, select showtimes, book seats, make payments, and manage reservations at AcmePlex cinemas.
+
+## Table of Contents
+
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running the Application](#running-the-application)
+- [Available Scripts](#available-scripts)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+- **User Authentication**: Register and log in to your AcmePlex account.
+- **Movie Search**: Search for movies by title, genre, or keywords.
+- **Seat Booking**: Select seats in a visual layout for available showtimes.
+- **Payment Processing**: Securely make payments for your reservations.
+- **Profile Management**: View and edit your user profile and booking history.
+- **Notifications**: Receive updates and notifications about your bookings.
+- **Refund Processing**: Request refunds for eligible bookings.
+- **Responsive Design**: Optimized for both desktop and mobile devices.
+
+## Technologies Used
+
+- **React**: JavaScript library for building user interfaces.
+- **Grommet**: A React-based framework that provides accessibility, modularity, responsiveness, and theming.
+- **React Router DOM**: For handling in-app routing.
+- **Context API**: For state management (Authentication and Notifications).
+- **Grommet Icons**: Iconography for visual enhancements.
+- **DeepMerge**: Utility for deep merging of theme configurations.
+
+## Prerequisites
+
+Before you begin, ensure you have met the following requirements:
+
+- **Node.js**: Version 14 or above.
+- **npm**: Node Package Manager (comes with Node.js) or **yarn** as an alternative.
+
+## Installation
+
+Follow these steps to set up the project locally:
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/your-username/acmeplex-frontend.git
+   ```
+
+2. **Navigate to the Project Directory**
+
+   ```bash
+   cd acmeplex-frontend
+   ```
+
+3. **Install Dependencies**
+   Using npm:
+   ```bash
+   npm install
+   ```
+
+## Running the Application
+
+To start the development server, run:
+
+Using npm:
+
+```bash
+   npm run
+```
+
+This will launch the app on http://localhost:3000 in your default web browser. The app will automatically reload if you make changes to the code.
 
 ## Available Scripts
 
 In the project directory, you can run:
+• npm start: Runs the app in development mode.
+• npm run build: Builds the app for production to the build folder.
+• npm run eject: Ejects the app from Create React App configuration (irreversible).
 
-### `npm start`
+## Project Structure
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+An overview of the project’s file and folder structure:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+acmeplex-frontend/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── components/
+│   │   └── (Shared components)
+│   ├── context/
+│   │   ├── AuthContext.js
+│   │   └── NotificationsContext.js
+│   ├── pages/
+│   │   ├── App.js
+│   │   ├── Landing.js
+│   │   ├── Login.js
+│   │   ├── Profile.js
+│   │   ├── Register.js
+│   │   ├── Tickets.js
+│   │   ├── Payments.js
+│   │   ├── Search.js
+│   │   ├── Successful.js
+│   │   ├── SeatBooking.js
+│   │   ├── MakePayment.js
+│   │   ├── ProcessRefund.js
+│   │   └── 404.js
+│   ├── index.js
+│   └── styles/
+│       └── (CSS or styled-components)
+├── package.json
+└── README.md
+```
 
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Thank you for using AcmePlex! If you have any questions or need assistance, please open an issue or contact the project maintainers.

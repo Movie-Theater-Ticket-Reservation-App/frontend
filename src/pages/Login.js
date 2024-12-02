@@ -1,6 +1,5 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-
 import {
   Box,
   Button,
@@ -14,7 +13,7 @@ import {
   ResponsiveContext,
 } from "grommet";
 import { User, Lock } from "grommet-icons";
-import { AuthContext } from "../context/AuthContext"; // Import AuthContext
+import { AuthContext } from "../context/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -43,11 +42,58 @@ const Login = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // console.log("API Response Data:", data); // Log the entire response data
 
         login(data.userID); // Save the user ID using AuthContext
-        // console.log("Logged in user ID:", data.userid);
         setError("");
+
+        try {
+          // Fetch the list of movies
+          const moviesResponse = await fetch("http://localhost:8080/movies/");
+          const movies = await moviesResponse.json();
+
+          // Get today's date
+          const today = new Date();
+          today.setHours(0, 0, 0, 0); // Normalize time to midnight
+
+          // Filter movies with future release dates
+          const futureMovies = movies.filter((movie) => {
+            const releaseDate = new Date(movie.releaseDate);
+            return releaseDate > today;
+          });
+
+          // Fetch the user's profile
+          const userProfileResponse = await fetch(
+            `http://localhost:8080/users/${data.userID}`
+          );
+          const userProfile = await userProfileResponse.json();
+
+          // Extract existing notification messages
+          const existingMessages = userProfile.notificationHistory.map(
+            (notification) => notification.message
+          );
+
+          // For each future movie, check if the notification exists
+          for (const movie of futureMovies) {
+            const message = `${movie.movieTitle} is coming out on ${movie.releaseDate}`;
+            if (!existingMessages.includes(message)) {
+              // Send notification to the notifications endpoint
+              await fetch(`http://localhost:8080/notifications/`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  userID: data.userID,
+                  message,
+                }),
+              });
+            }
+          }
+        } catch (notificationError) {
+          console.error("Error sending notifications:", notificationError);
+        }
+        // End Notification Feature
+
         navigate("/"); // Navigate to Home page after successful login
       } else if (response.status === 401) {
         setError("Account not recognized. Please check your credentials.");
@@ -102,7 +148,12 @@ const Login = () => {
                 icon={<Lock />}
               />
             </FormField>
-            <Box direction="row" gap="medium" margin={{ top: "medium" }} justify="center">
+            <Box
+              direction="row"
+              gap="medium"
+              margin={{ top: "medium" }}
+              justify="center"
+            >
               <Button type="submit" label="Login" primary />
               <Button label="Sign Up" href="/register" />
             </Box>

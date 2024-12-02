@@ -1,4 +1,6 @@
 import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Box,
   Button,
@@ -15,6 +17,8 @@ import {
 import { Close } from "grommet-icons";
 
 const Profile = () => {
+  const navigate = useNavigate(); // For redirection
+
   const [user, setUser] = useState({
     name: "John Doe",
     email: "johndoe@example.com",
@@ -276,22 +280,35 @@ const Profile = () => {
                 </ul>
               </Text>
               <Box
-                direction="row"
-                gap="medium"
-                justify="center"
-                margin={{ top: "medium" }}
-              >
-                <Button label="View Tickets" href="/tickets" />
-                <Button label="Payment History" href="/payments" />
-              </Box>
-              <Box
-                direction="row"
-                gap="medium"
-                justify="center"
-                margin={{ top: "medium" }}
-              >
-                <Button label="Edit Profile" onClick={handleEdit} primary />
-              </Box>
+  direction="row"
+  gap="medium"
+  justify="center"
+  margin={{ top: "medium" }}
+>
+  {/* View Tickets Button */}
+  <Button
+    type="button"
+    label="View Tickets"
+    onClick={() => {
+      navigate("/tickets");
+    }}
+  />
+  {/* Payment History Button */}
+  <Button
+    type="button"
+    label="Payment History"
+    onClick={() => {
+      navigate("/payments");
+    }}
+  />
+  {/* Edit Profile Button */}
+  <Button
+    type="button"
+    label="Edit Profile"
+    primary
+    onClick={handleEdit}
+  />
+</Box>
             </>
           )}
         </Box>

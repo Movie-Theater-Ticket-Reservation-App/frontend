@@ -1,12 +1,25 @@
-import React, { useContext } from "react";
-import { useState, useRef } from "react";
-
-import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from "react-router-dom";
-import { Grommet, Header, Box, Button, Text, TextInput, Drop } from "grommet";
-import { Search, Notification } from "grommet-icons";
+import React, { useContext, useState, useRef } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+} from "react-router-dom";
+import {
+  Grommet,
+  Header,
+  Box,
+  Button,
+  Text,
+  TextInput,
+  Drop,
+} from "grommet";
+import { Search as SearchIcon, Notification } from "grommet-icons";
 import { deepMerge } from "grommet/utils";
 
-import { AuthProvider, AuthContext } from "../context/AuthContext"; // Import AuthContext and Provider
+import { AuthProvider, AuthContext } from "../context/AuthContext";
+import { NotificationsProvider, NotificationsContext } from '../context/NotificationsContext';
 
 import Landing from "./Landing";
 import Login from "./Login";
@@ -42,6 +55,8 @@ const AppBar = ({ dark, setDark }) => {
   const navigate = useNavigate(); // Hook for navigation
   const { userID, logout } = useContext(AuthContext); // Access userID and logout from AuthContext
 
+  const { notifications } = useContext(NotificationsContext);
+
   const handleSearchSubmit = (event) => {
     event.preventDefault();
     if (searchQuery.trim()) {
@@ -53,14 +68,6 @@ const AppBar = ({ dark, setDark }) => {
     logout(); // Clear the user session
     navigate("/"); // Redirect to the homepage
   };
-
-  // Load and replace with API call
-  const notifications = [
-    { id: 1, message: "Your ticket for 'The Great Gatsby' is confirmed!" },
-    { id: 2, message: "Reminder: 'Wall-E' starts at 6 PM today." },
-    { id: 3, message: "Your refund for 'Cars' has been processed." },
-    { id: 4, message: "News: The Gladiator III is coming out in 10 days. Book your tickets now!" },
-  ];
 
   return (
     <Header
@@ -75,7 +82,10 @@ const AppBar = ({ dark, setDark }) => {
       </Text>
       <Box direction="row" gap="small" align="center">
         {/* Search Field */}
-        <form onSubmit={handleSearchSubmit} style={{ display: "flex", alignItems: "center" }}>
+        <form
+          onSubmit={handleSearchSubmit}
+          style={{ display: "flex", alignItems: "center" }}
+        >
           <Box
             direction="row"
             align="center"
@@ -97,7 +107,7 @@ const AppBar = ({ dark, setDark }) => {
               }}
             />
             <Button
-              icon={<Search />}
+              icon={<SearchIcon />}
               type="submit"
               a11yTitle="Search"
               style={{
@@ -138,22 +148,48 @@ const AppBar = ({ dark, setDark }) => {
                   <Text weight="bold" margin={{ bottom: "small" }}>
                     Notifications
                   </Text>
-                  {notifications.map((notif) => (
-                    <Box
-                      key={notif.id}
-                      pad="small"
-                      margin={{ bottom: "xsmall" }}
-                      background="light-2"
-                      round="small"
-                    >
-                      <Text size="small">{notif.message}</Text>
-                    </Box>
-                  ))}
+                  {notifications.length > 0 ? (
+                    notifications
+                      .slice(-4) // Get the last 5 notifications
+                      .reverse() // Optional: Reverse to show the latest first
+                      .map((notif) => (
+                        <Box
+                          key={notif.id}
+                          pad="small"
+                          margin={{ bottom: "xsmall" }}
+                          background="light-2"
+                          round="small"
+                        >
+                          <Text size="small">{notif.message}</Text>
+                        </Box>
+                      ))
+                  ) : (
+                    <Text size="small">No notifications</Text>
+                  )}
                 </Box>
               </Drop>
             )}
           </Box>
         )}
+
+        {/* Refund Button */}
+        <Button
+          label="Refund"
+          plain
+          onClick={() => navigate("/refund")}
+          style={{
+            height: "42px",
+            padding: "0 16px",
+            borderRadius: "4px",
+            color: hoveredButton === "refund" ? "lightblue" : "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
+          onMouseEnter={() => setHoveredButton("refund")}
+          onMouseLeave={() => setHoveredButton(null)}
+        />
 
         {/* Conditionally Render Buttons */}
         {userID ? (
@@ -218,27 +254,36 @@ const AppBar = ({ dark, setDark }) => {
 };
 
 function App() {
-  const [dark, setDark] = React.useState(false);
+  const [dark, setDark] = useState(false);
 
   return (
     <AuthProvider>
       <Router>
         <Grommet theme={theme} full themeMode={dark ? "dark" : "light"}>
-          <AppBar dark={dark} setDark={setDark} />
-          <Routes>
-            <Route path="/" element={<Landing dark={dark} />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/seat-booking/:theatreId/:movieId/:showtime" element={<SeatBooking />} />
-            <Route path="/tickets" element={<Tickets />} />
-            <Route path="/payments" element={<Payments />} />
-            <Route path="/makepayment" element={<MakePayment />} />
-            <Route path="/refund" element={<ProcessRefund />} />
-            <Route path="/search" element={<Searches />} />
-            <Route path="/successful" element={<Successful />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthContext.Consumer>
+            {({ userID }) => (
+              <NotificationsProvider userID={userID}>
+                <AppBar dark={dark} setDark={setDark} />
+                <Routes>
+                  <Route path="/" element={<Landing dark={dark} />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route
+                    path="/seat-booking/:theatreId/:movieId/:showtime"
+                    element={<SeatBooking />}
+                  />
+                  <Route path="/tickets" element={<Tickets />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/makepayment" element={<MakePayment />} />
+                  <Route path="/refund" element={<ProcessRefund />} />
+                  <Route path="/search" element={<Searches />} />
+                  <Route path="/successful" element={<Successful />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </NotificationsProvider>
+            )}
+          </AuthContext.Consumer>
         </Grommet>
       </Router>
     </AuthProvider>

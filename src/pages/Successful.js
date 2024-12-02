@@ -1,30 +1,69 @@
-import React from "react";
-import { Box, Button, Page, PageHeader, Text } from "grommet";
-import { Checkmark } from "grommet-icons";
+import React, { useState, useEffect, useContext } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Box, Button, Page, PageHeader, Text, Layer } from "grommet";
+import { Checkmark, Close } from "grommet-icons";
+import { AuthContext } from "../context/AuthContext"; // Import AuthContext
 
-const Successful = ({ ticketDetails }) => {
-  
-    // Mock details
-    const details = ticketDetails || [
-    {
-      ticketID: "123456",
-      movieName: "The Great Gatsby",
-      theatre: "Cineplex VIP Cinemas University District",
-      showtime: "4:30 PM, Nov 28, 2024",
-      seat: "Row A, Seat 10",
-    },
-    {
-      ticketID: "123457",
-      movieName: "The Great Gatsby",
-      theatre: "Cineplex VIP Cinemas University District",
-      showtime: "4:30 PM, Nov 28, 2024",
-      seat: "Row A, Seat 11",
-    },
-    
-  ];
+const Successful = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { ticketDetails } = location.state || {};
+
+  // Access userID from AuthContext
+  const { userID } = useContext(AuthContext);
+  const isLoggedIn = userID && userID !== "0";
+
+  // State for notification
+  const [notification, setNotification] = useState(null);
+
+  // Set notification after 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setNotification("An email of your ticket and receipt has been sent.");
+    }, 2000);
+
+    return () => clearTimeout(timer); // Cleanup on unmount
+  }, []);
+
+  // If ticketDetails is not provided, show a message
+  if (!ticketDetails || ticketDetails.length === 0) {
+    return (
+      <Box align="center" pad="large">
+        <Text color="status-critical" size="large">
+          No ticket details available.
+        </Text>
+      </Box>
+    );
+  }
 
   return (
     <Page background="light-3" fill>
+      {/* Display notification if it exists */}
+      {notification && (
+        <Layer
+          position="top"
+          modal={false}
+          margin={{ vertical: "medium", horizontal: "small" }}
+          onEsc={() => setNotification(null)}
+          responsive={false}
+          plain
+        >
+          <Box
+            align="center"
+            direction="row"
+            gap="small"
+            justify="between"
+            round="small"
+            elevation="medium"
+            pad={{ vertical: "small", horizontal: "medium" }}
+            background="status-ok"
+          >
+            <Text>{notification}</Text>
+            <Button icon={<Close />} onClick={() => setNotification(null)} plain />
+          </Box>
+        </Layer>
+      )}
+
       <Box
         fill
         align="center"
@@ -40,7 +79,7 @@ const Successful = ({ ticketDetails }) => {
           <PageHeader title="Payment Successful!" />
         </Box>
 
-        <Box margin={{ bottom: "medium" }}>
+        <Box margin={{ bottom: "medium" }} align="center">
           <Text size="large" weight="bold">
             Thank you for your reservation!
           </Text>
@@ -53,7 +92,7 @@ const Successful = ({ ticketDetails }) => {
         </Box>
 
         {/* Ticket Details */}
-        {details.map((ticket, index) => (
+        {ticketDetails.map((ticket, index) => (
           <Box
             key={ticket.ticketID}
             pad={{ vertical: "small", horizontal: "medium" }}
@@ -61,6 +100,7 @@ const Successful = ({ ticketDetails }) => {
             background="light-2"
             round="small"
             margin={{ bottom: "small" }}
+            width="100%"
           >
             <Text>
               <strong>Ticket {index + 1}</strong>
@@ -90,18 +130,21 @@ const Successful = ({ ticketDetails }) => {
           justify="center"
           margin={{ top: "medium" }}
         >
-          <Button
-            label="View Tickets"
-            href="/tickets"
-            primary
-            style={{
-              borderRadius: "25px",
-              padding: "10px 20px",
-            }}
-          />
+          {/* Conditionally render the "View Tickets" button */}
+          {isLoggedIn && (
+            <Button
+              label="View Tickets"
+              onClick={() => navigate("/tickets")}
+              primary
+              style={{
+                borderRadius: "25px",
+                padding: "10px 20px",
+              }}
+            />
+          )}
           <Button
             label="Back to Home"
-            href="/"
+            onClick={() => navigate("/")}
             style={{
               borderRadius: "25px",
               padding: "10px 20px",

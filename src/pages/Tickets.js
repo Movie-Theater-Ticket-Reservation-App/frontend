@@ -1,10 +1,9 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
   Page,
-  PageContent,
   PageHeader,
   Text,
   Table,
@@ -14,54 +13,108 @@ import {
   TableRow,
   ResponsiveContext,
 } from "grommet";
+import { AuthContext } from "../context/AuthContext";
 
 const Tickets = () => {
-  // Mock ticket data (replace this with API call if necessary)
-  const [tickets] = useState([
-    {
-      ticketID: "001",
-      movieTitle: "The Great Gatsby",
-      showtime: "4:30 PM, Nov 20, 2024",
-      seatNumber: "A10",
-      location: "Cineplex VIP Cinemas University District",
-    },
-    {
-      ticketID: "002",
-      movieTitle: "Wall-E",
-      showtime: "2:00 PM, Nov 18, 2024",
-      seatNumber: "B12",
-      location: "Cineplex Odeon Westhills Cinemas",
-    },
-    {
-      ticketID: "003",
-      movieTitle: "Cars",
-      showtime: "7:30 PM, Nov 15, 2024",
-      seatNumber: "C5",
-      location: "Cineplex VIP Cinemas University District",
-    },
-  ]);
+  const [tickets, setTickets] = useState([]);
+  const [error, setError] = useState("");
+  const size = useContext(ResponsiveContext);
+  const navigate = useNavigate();
+  const { userID } = useContext(AuthContext);
 
-  const size = useContext(ResponsiveContext); // Detect screen size
-  const navigate = useNavigate(); // Hook for navigation
+  // Function to translate seat number into A1, B1, etc.
+  const calculateSeatPosition = (seatNumber) => {
+    const rows = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const rowIndex = Math.floor((seatNumber - 1) / 10);
+    const seatInRow = ((seatNumber - 1) % 10) + 1;
+    return `${rows[rowIndex]}${seatInRow}`;
+  };
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        const response = await fetch(`http://localhost:8080/users/${userID}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch ticket history.");
+        }
+        const data = await response.json();
+        const ticketHistory = data.ticketHistory;
+
+        // Fetch all theatres
+        const theatresResponse = await fetch("http://localhost:8080/theatres/");
+        const theatres = theatresResponse.ok ? await theatresResponse.json() : [];
+
+        // Fetch showtimes for theatres and enrich tickets
+        const enrichedTickets = await Promise.all(
+          ticketHistory.map(async (ticket) => {
+            let movieTitle = "Unknown Movie";
+            let theatreName = "Unknown Theatre";
+
+            // Match theatreID to fetch theatreName
+            const matchingTheatre = theatres.find(
+              (theatre) => theatre.theatreID === ticket.theatreID
+            );
+            if (matchingTheatre) {
+              theatreName = matchingTheatre.theatreName;
+            }
+
+            // Fetch showtimes for the specific theatre
+            const showtimesResponse = await fetch(
+              `http://localhost:8080/theatres/${ticket.theatreID}/showtimes`
+            );
+            if (showtimesResponse.ok) {
+              const showtimes = await showtimesResponse.json();
+              const matchingShowtime = showtimes.find(
+                (showtime) => showtime.showtimeID === ticket.showtimeID
+              );
+              if (matchingShowtime) {
+                movieTitle = matchingShowtime.movieTitle || "Unknown Movie";
+              }
+            }
+
+            return {
+              ...ticket,
+              movieTitle,
+              theatreName,
+              seatPosition: calculateSeatPosition(ticket.seatNumber),
+            };
+          })
+        );
+
+        setTickets(enrichedTickets);
+      } catch (err) {
+        console.error("Error fetching ticket history:", err);
+        setError("Unable to fetch your tickets. Please try again later.");
+      }
+    };
+
+    if (userID) {
+      fetchTickets();
+    } else {
+      setError("You must be logged in to view your tickets.");
+    }
+  }, [userID]);
 
   return (
     <Page background="light-3" fill>
       <Box
         fill
         align="center"
-        justify={size === "small" ? "center" : "start"} 
+        justify={size === "small" ? "center" : "start"}
         pad={{ top: size === "small" ? "none" : "medium", horizontal: "medium" }}
       >
         <Box
-          width={size === "small" ? "95%" : "70%"} 
+          width={size === "small" ? "95%" : "70%"}
           pad="medium"
           background="white"
           round="small"
           elevation="small"
-          overflow="auto" 
+          overflow="auto"
         >
           <PageHeader title="Your Tickets" />
-          {tickets.length > 0 ? (
+          {error ? (
+            <Text color="status-critical">{error}</Text>
+          ) : tickets.length > 0 ? (
             <Box overflow="auto">
               <Table>
                 <TableHeader>
@@ -84,12 +137,14 @@ const Tickets = () => {
                   {tickets.map((ticket) => (
                     <TableRow key={ticket.ticketID}>
                       <TableCell scope="row">
-                        <strong>{ticket.movieTitle}</strong>
+                        <strong>{ticket.movieTitle || "N/A"}</strong>
                       </TableCell>
-                      <TableCell>{ticket.showtime}</TableCell>
-                      <TableCell>{ticket.location}</TableCell>
+                      <TableCell>{ticket.date || "N/A"}</TableCell>
                       <TableCell>
-                        <strong>{ticket.seatNumber}</strong>
+                        {ticket.theatreName || "Location not available"}
+                      </TableCell>
+                      <TableCell>
+                        <strong>{ticket.seatPosition || "N/A"}</strong>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -102,13 +157,11 @@ const Tickets = () => {
                 justify="left"
                 margin={{ bottom: "medium", top: "medium", left: "small" }}
               >
-
                 <Button
                   label="Back"
                   onClick={() => navigate(-1)}
                   primary={false}
                 />
-                
               </Box>
             </Box>
           ) : (

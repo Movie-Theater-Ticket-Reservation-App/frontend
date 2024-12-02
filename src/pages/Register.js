@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom"; 
-import axios from "axios"; // Import Axios
+import axios from "axios"; 
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
   TextInput,
   Text,
   ResponsiveContext,
+  CheckBox,
 } from "grommet";
 
 const Register = () => {
@@ -49,7 +50,7 @@ const Register = () => {
       if (response.status === 200 || response.status === 201) {
         // On successful registration, navigate to homepage
         alert("Registration successful!");
-        navigate("/"); // Navigate to the homepage
+        navigate("/login"); // Navigate to the login
       }
     } catch (err) {
       // Handle errors
@@ -122,6 +123,16 @@ const Register = () => {
                 }
               />
             </FormField>
+            <Box margin={{ top: "medium", bottom: "medium" }}>
+              <CheckBox
+                label="Enable automatic payment for annual membership fee ($20)"
+                checked={formData.autoPayment}
+                onChange={(event) =>
+                  setFormData({ ...formData, autoPayment: event.target.checked })
+                }
+                required
+              />
+            </Box>
             <Box direction="row" gap="medium" justify="center" margin={{ top: "medium" }}>
               <Button type="submit" label={loading ? "Registering..." : "Register"} primary disabled={loading} />
               <Button label="Cancel" href="/" />

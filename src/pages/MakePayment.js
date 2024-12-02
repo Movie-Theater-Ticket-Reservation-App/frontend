@@ -12,13 +12,15 @@ import {
   Select,
   ResponsiveContext,
 } from "grommet";
-import { AuthContext } from "../context/AuthContext"; // Import AuthContext
+import { AuthContext } from "../context/AuthContext";
+import { NotificationsContext } from "../context/NotificationsContext"; // Import NotificationsContext
 
 const MakePayment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const size = useContext(ResponsiveContext); // Detect screen size
   const { userID } = useContext(AuthContext); // Get the userID from AuthContext
+  const { fetchNotifications } = useContext(NotificationsContext); // Get fetchNotifications
 
   let userIdValue = parseInt(userID, 10);
 
@@ -135,7 +137,7 @@ const MakePayment = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
+
     // Validation
     if (
       !formData.paymentType ||
@@ -146,18 +148,18 @@ const MakePayment = () => {
       setError("Please fill in all fields");
       return;
     }
-  
+
     if (!email) {
       setError("Please enter your email address");
       return;
     }
-  
+
     setError("");
-  
+
     try {
       const ticketDetails = []; // Array to store ticket details
       const totalAmountPerTicket = ticketPrice * (1 + 0.05); // Include tax (5%)
-  
+
       // For each seat, process payment and create ticket
       for (const seat of selectedSeats) {
         // Prepare payment data for one ticket
@@ -170,11 +172,11 @@ const MakePayment = () => {
           expiry: formData.expiryDate,
           email: email,
         };
-  
+
         // Log payment data
         console.log("Processing payment for seat:", seat.seatNumber || seat);
         console.log("Payment Data Being Sent:", JSON.stringify(paymentData));
-  
+
         // Process Payment
         const paymentResponse = await fetch("http://localhost:8080/payments/", {
           method: "POST",
@@ -183,31 +185,31 @@ const MakePayment = () => {
           },
           body: JSON.stringify(paymentData),
         });
-  
+
         if (!paymentResponse.ok) {
           const errorText = await paymentResponse.text();
           console.error("Payment processing failed:", errorText);
           throw new Error("Payment processing failed");
         }
-  
+
         const paymentResult = await paymentResponse.json();
         console.log("Payment successful:", paymentResult);
-  
+
         const { paymentID, user: newUserID } = paymentResult;
-  
+
         // Proceed with ticket creation
         const ticketData = {
           showtimeID: showtime.showtimeID,
           seatNumber: seat.seatNumber || seat,
           theatreID: theatre.theatreID,
           userID: newUserID,
-          date: showtime.date,
+          date: `${showtime.date} ${showtime.time}`, // Include date and time
           paymentID: paymentID,
           ticketStatus: "booked",
         };
-  
+
         console.log("Creating ticket with data:", JSON.stringify(ticketData));
-  
+
         const ticketResponse = await fetch("http://localhost:8080/tickets/", {
           method: "POST",
           headers: {
@@ -215,16 +217,16 @@ const MakePayment = () => {
           },
           body: JSON.stringify(ticketData),
         });
-  
+
         if (!ticketResponse.ok) {
           const errorText = await ticketResponse.text();
           console.error("Ticket creation failed:", errorText);
           throw new Error("Ticket creation failed");
         }
-  
+
         const ticketResult = await ticketResponse.json();
         console.log("Ticket created:", ticketResult);
-  
+
         // Collect ticket details for display
         ticketDetails.push({
           ticketID: ticketResult.ticketID,
@@ -234,7 +236,34 @@ const MakePayment = () => {
           seat: `Seat ${ticketData.seatNumber}`,
         });
       }
-  
+
+      // Send notification to registered user
+      if (userIdValue > 0) {
+        const notificationData = {
+          userID: userIdValue,
+          message: `You have successfully booked tickets for ${movie.movieTitle}!`,
+        };
+
+        try {
+          const notificationResponse = await fetch(`http://localhost:8080/notifications/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(notificationData),
+          });
+
+          if (notificationResponse.ok) {
+            // Refresh notifications
+            fetchNotifications();
+          } else {
+            console.error("Error sending notification");
+          }
+        } catch (error) {
+          console.error("Error sending notification:", error);
+        }
+      }
+
       // Navigate to the success page with ticket details
       navigate("/successful", { state: { ticketDetails } });
     } catch (error) {
@@ -244,12 +273,13 @@ const MakePayment = () => {
   };
 
   return (
-    <Page background="light-3" fill>
+    <Page background="light-3" fill="vertical">
       <Box
-        fill
+        fill="vertical"
+        overflow="auto"
         align="center"
-        justify={size === "small" ? "center" : "start"}
-        pad={{ top: size === "small" ? "3/5" : "medium", horizontal: "medium" }}
+        justify="center"
+        pad={{ vertical: "medium", horizontal: "medium" }}
       >
         <Box
           width={size === "small" ? "90%" : "40%"}
@@ -257,6 +287,7 @@ const MakePayment = () => {
           background="white"
           elevation="small"
           round="small"
+          flex={false} // Prevents the Box from shrinking
         >
           <PageHeader title="Process Payment" alignSelf="start" />
           {error && (
@@ -372,28 +403,28 @@ const MakePayment = () => {
           </Form>
 
           {/* Calculation Section at the Bottom */}
-          <Box margin={{ top: "medium" }} align="center">
-            <Box direction="row" justify="between" width="100%">
+          <Box margin={{ top: "small" }} align="center">
+            <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
               <Text>Number of Tickets:</Text>
               <Text>
                 {numberOfTickets} x ${ticketPrice.toFixed(2)}
               </Text>
             </Box>
-            <Box direction="row" justify="between" width="100%">
+            <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
               <Text>Subtotal:</Text>
               <Text>${subtotal.toFixed(2)}</Text>
             </Box>
-            <Box direction="row" justify="between" width="100%">
+            <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
               <Text>Tax (5%):</Text>
               <Text>${tax.toFixed(2)}</Text>
             </Box>
             {formData.useCreditPoints === "Yes" && (
-              <Box direction="row" justify="between" width="100%">
+              <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
                 <Text>Redeem Points ({redeemPoints}):</Text>
                 <Text>- ${pointsValue.toFixed(2)}</Text>
               </Box>
             )}
-            <Box direction="row" justify="between" width="100%">
+            <Box direction="row" justify="between" width="100%" margin={{ bottom: "xsmall" }}>
               <Text>
                 <strong>Total:</strong>
               </Text>

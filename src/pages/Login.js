@@ -89,6 +89,22 @@ const Login = () => {
               });
             }
           }
+
+          // Check for the membership fee notification
+          const membershipMessage = "Membership fee automatically withdrawn";
+          if (!existingMessages.includes(membershipMessage)) {
+            // Send the membership fee notification
+            await fetch(`http://localhost:8080/notifications/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userID: data.userID,
+                message: membershipMessage,
+              }),
+            });
+          }
         } catch (notificationError) {
           console.error("Error sending notifications:", notificationError);
         }

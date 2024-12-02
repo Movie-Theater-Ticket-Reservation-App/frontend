@@ -38,18 +38,18 @@ const Tickets = () => {
           throw new Error("Failed to fetch ticket history.");
         }
         const data = await response.json();
-        const ticketHistory = data.ticketHistory;
-
+        const ticketHistory = data.ticketsHistory || []; // Updated to match API response
+  
         // Fetch all theatres
         const theatresResponse = await fetch("http://localhost:8080/theatres/");
         const theatres = theatresResponse.ok ? await theatresResponse.json() : [];
-
+  
         // Fetch showtimes for theatres and enrich tickets
         const enrichedTickets = await Promise.all(
           ticketHistory.map(async (ticket) => {
             let movieTitle = "Unknown Movie";
             let theatreName = "Unknown Theatre";
-
+  
             // Match theatreID to fetch theatreName
             const matchingTheatre = theatres.find(
               (theatre) => theatre.theatreID === ticket.theatreID
@@ -57,7 +57,7 @@ const Tickets = () => {
             if (matchingTheatre) {
               theatreName = matchingTheatre.theatreName;
             }
-
+  
             // Fetch showtimes for the specific theatre
             const showtimesResponse = await fetch(
               `http://localhost:8080/theatres/${ticket.theatreID}/showtimes`
@@ -71,7 +71,7 @@ const Tickets = () => {
                 movieTitle = matchingShowtime.movieTitle || "Unknown Movie";
               }
             }
-
+  
             return {
               ...ticket,
               movieTitle,
@@ -80,14 +80,14 @@ const Tickets = () => {
             };
           })
         );
-
+  
         setTickets(enrichedTickets);
       } catch (err) {
         console.error("Error fetching ticket history:", err);
         setError("Unable to fetch your tickets. Please try again later.");
       }
     };
-
+  
     if (userID) {
       fetchTickets();
     } else {
